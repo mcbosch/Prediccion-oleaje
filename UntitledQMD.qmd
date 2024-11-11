@@ -1,0 +1,122 @@
+---
+title: "Predicción oleaje"
+subtitle: "20582- Análisis de Datos para el GMAT"
+date: today
+author: Melcion Ciudad Bosch
+format:
+  html:
+    theme: lumen
+    toc: true
+    toc-depth: 3
+Rendering:
+    embed-resources: true
+---
+
+Podemos encontrar todo el código en el [repositorio](https://github.com/mcbosch/Prediccion-oleaje/tree/main) de GitHub
+
+```{r, include=FALSE, echo=FALSE, warning=FALSE, message=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+
+library(car)
+library(tidyverse)
+library(MASS)
+library(jpeg)
+```
+
+# Introducción
+
+Cualquier aficionado al surf o a días de playa sabrá lo complicado que és predecir bien un buen dia de olas. Hay mil factores que tener en cuenta y solo una combinación caprichosa de estos factores puede llevar a un gran dia de surf. En este proyecto hacemos un análisis de distintos factores que influencian al oleaje, junto al oleaje que hubo ese dia.
+
+Las muestras de datos són aleatorias generadas a partir de funciones de R y una interpretación de datos que hemos obtenido de aplicaciones como WindGuru o Windy.
+
+Estudiaremos varias variables como la altura de la ola, la energía, la dirección del viento y el estado del viento. Queremos analizar si podemos describir de manera significante la altura y la energía en función del viento. También que en el paso del tiempo hay una mejora de la calidad de la hola hasta que se pierde la energia.
+
+Este estudio lo haremos para una playa orientada hacia el nor-este, es decir, si miramos al agua estaremos mirando hacia el nor-este. En concreto és la zona de Son Serra de Marina en Mallorca, vease la siguiente imagen:
+
+Utilizaremos datos de [enlace datos](style=%22display:%20block;%20margin-left:%20auto;%20margin-right:%20auto;%22)
+
+# Primeros pasos
+
+Para nuestro análisis trabajaremos con las siguientes variables:
+
+-   Cuantitativas: altura (m), velocidad viento (km/h), energía (kJ), periodo (s), temperatura del agua (ºC)
+
+-   Cualitativas: dirección viento, estado del viento
+
+-   Ordinales: fecha
+
+Añadiremos como variable ordinal la que se utiliza en Todo-Surf que indica que calidad tiene la ola para ser surfeada:
+
+*NOTA*: Nos interesa para cada dia analizar varias horas, pero el problema es que a lo largo de un dia hay dependencia de lo que paso hace unas horas, también hay dependencia de lo que pudo pasar el dia anterior. Como nuestro interes del trabajo no es tanto un debate de como funciona la metereología y simplemente queremos generar una base de datos coherente supondremos normalidad de nuestras variables.
+
+Mallorca, al estar en zona mediterrania es muy complicado de crear una base de datos aleatoria coherente debido a que es una isla en medio del med. Optamos pues por estudiar Bilbao, que si tenemos unos datos mas normales.
+
+## Definición Variables Cuantitativas
+
+Definimos las variables:
+
+-   $X_1$: velocidad del viento en nudos
+-   $X_2$: energía de las olas en kJ
+-   $X_3$: periodo de las olas en segundos
+-   $X_4$: altura de las olas en metros
+
+Entonces definiremos nuestra base de datos como:
+
+```{r}
+covarianza <- matrix(c(13, 77 ,6 ,  0.2, 
+                       77  ,5000,134, 10, 
+                       6  ,134 , 6 , 0.12, 
+                       0.2   , 10 , 0.12, 0.05), ncol = 4, byrow = TRUE)
+
+medias <- c(8, 164, 8, 1.4)
+
+set.seed(43)
+datos_numericos <- (mvrnorm(150, mu = medias, covarianza) 
+                    %>% pmax(., 0) %>% as.tibble())
+names(datos_numericos) <- c('V','En','P','A')
+
+
+```
+
+## Definición Variables Cualitativas
+
+Definimos las variables no ordinales: 
+
+-   $X_5$: dirección del viento 
+-   $X_6$: marea
+
+```{r}
+direccion_viento <- sample(c('N','W','S','E','NW','NE','SW','SE'),150, replace = TRUE)
+marea <- sample(c('ALTA','BAJA'),150, replace = TRUE)
+```
+
+Definimos las variables ordinales:
+
+-   $X_7$: fecha
+-   $X_8$: Douglas: Esta variable es una escala que nos dice que nos da una descripción del mar en función del viento. Podemos encontrar esta descripción en el [AEMET]()
+-   $X_9$: Surf_Rating: Esta variable nos da un SCORE del 1 al 5 para la calidad de surf de la ola. Puntuara más alto olas grandes con viento de tierra, y más bajo para olas pequeñas con viento de mar.
+
+Definimos entonces nuestro dataframe:
+
+```{r}
+primer_dia <- as.Date("2017-01-01")
+fechas <- seq(from = primer_dia, by ='day', length.out = 150) 
+
+datos_cual <- tibble(DV = direccion_viento,
+                    M  = marea,
+                    DAT = fechas)
+
+datos <- tibble(datos_numericos,datos_cual)
+```
+
+
+Añadiremos la variable SST de la base de datos de [INTRODUCIR DATOS CON BIBLIOGRAFIA!]()
+```{r}
+kaggle_data <- read.csv('kaggle_data.csv',header = TRUE) 
+datos_nuevos <- kaggle_data  %>%  filter(grepl('12:00',Date.Time)) %>% slice(1:150) %>% mutate(Date.Time = seq(from = primer_dia, by ='day', length.out = 150)) %>% dplyr::select(Date.Time,SST)
+
+names(datos_nuevos) <- c('DAT','SST')
+
+datos <- datos %>% right_join(datos_nuevos)
+```
+
