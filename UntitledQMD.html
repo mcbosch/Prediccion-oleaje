@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Melcion Ciudad Bosch">
-<meta name="dcterms.date" content="2024-11-11">
+<meta name="dcterms.date" content="2024-11-12">
 
 <title>Predicción oleaje</title>
 <style>
@@ -111,10 +111,19 @@ window.Quarto = {
    
   <ul>
   <li><a href="#introducción" id="toc-introducción" class="nav-link active" data-scroll-target="#introducción">Introducción</a></li>
-  <li><a href="#primeros-pasos" id="toc-primeros-pasos" class="nav-link" data-scroll-target="#primeros-pasos">Primeros pasos</a>
+  <li><a href="#analisis-exploratorio" id="toc-analisis-exploratorio" class="nav-link" data-scroll-target="#analisis-exploratorio">Analisis exploratorio:</a></li>
+  <li><a href="#surf-rating" id="toc-surf-rating" class="nav-link" data-scroll-target="#surf-rating">Surf-Rating</a></li>
+  <li><a href="#descripción-por-regresión-lineal" id="toc-descripción-por-regresión-lineal" class="nav-link" data-scroll-target="#descripción-por-regresión-lineal">Descripción por regresión lineal</a></li>
+  <li><a href="#contraste-de-la-hipótesis" id="toc-contraste-de-la-hipótesis" class="nav-link" data-scroll-target="#contraste-de-la-hipótesis">Contraste de la hipótesis</a>
   <ul class="collapse">
-  <li><a href="#definición-variables-cuantitativas" id="toc-definición-variables-cuantitativas" class="nav-link" data-scroll-target="#definición-variables-cuantitativas">Definición Variables Cuantitativas</a></li>
-  <li><a href="#definición-variables-cualitativas" id="toc-definición-variables-cualitativas" class="nav-link" data-scroll-target="#definición-variables-cualitativas">Definición Variables Cualitativas</a></li>
+  <li><a href="#como-afecta-la-dirección-del-viento-a-las-características-de-la-ola" id="toc-como-afecta-la-dirección-del-viento-a-las-características-de-la-ola" class="nav-link" data-scroll-target="#como-afecta-la-dirección-del-viento-a-las-características-de-la-ola">Como afecta la dirección del viento a las características de la ola?</a></li>
+  </ul></li>
+  <li><a href="#comparación" id="toc-comparación" class="nav-link" data-scroll-target="#comparación">Comparación</a></li>
+  <li><a href="#conclusión" id="toc-conclusión" class="nav-link" data-scroll-target="#conclusión">Conclusión</a></li>
+  <li><a href="#bibliografia" id="toc-bibliografia" class="nav-link" data-scroll-target="#bibliografia">Bibliografia</a></li>
+  <li><a href="#anexo" id="toc-anexo" class="nav-link" data-scroll-target="#anexo">Anexo</a>
+  <ul class="collapse">
+  <li><a href="#construcción-de-la-base-de-datos" id="toc-construcción-de-la-base-de-datos" class="nav-link" data-scroll-target="#construcción-de-la-base-de-datos">Construcción de la base de datos</a></li>
   </ul></li>
   </ul>
 </nav>
@@ -141,7 +150,7 @@ window.Quarto = {
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">November 11, 2024</p>
+      <p class="date">November 12, 2024</p>
     </div>
   </div>
   
@@ -156,74 +165,270 @@ window.Quarto = {
 <p>Podemos encontrar todo el código en el <a href="https://github.com/mcbosch/Prediccion-oleaje/tree/main">repositorio</a> de GitHub</p>
 <section id="introducción" class="level1">
 <h1>Introducción</h1>
-<p>Cualquier aficionado al surf o a días de playa sabrá lo complicado que és predecir bien un buen dia de olas. Hay mil factores que tener en cuenta y solo una combinación caprichosa de estos factores puede llevar a un gran dia de surf. En este proyecto hacemos un análisis de distintos factores que influencian al oleaje, junto al oleaje que hubo ese dia.</p>
-<p>Las muestras de datos són aleatorias generadas a partir de funciones de R y una interpretación de datos que hemos obtenido de aplicaciones como WindGuru o Windy.</p>
+<p>La predicción de la situación costera es muy importante para logística portuaria, para la pesca, para la seguridad de zonas costeras y para cualquier aficionado al deporte.</p>
+<p>En nuestro caso, queremos saber si un dia, será bueno o no para ir a practicar surf. Cualquiera que haya intentado hacer esta predicción sabrá que es muy complicado predecir un buen dia de olas. Hay muchos factores que tener en cuenta y solo una combinación caprichosa de estos factores puede llevar a un gran dia de surf. En este proyecto hacemos un análisis de distintos factores que influencian al oleaje, junto al oleaje que hubo ese dia.</p>
+<p>Las muestras de datos són aleatorias generadas a partir de funciones de R. Para aportar realismo hemos hecho una interpretación de datos que hemos obtenido de aplicaciones como WindGuru, Windy o TodoSurf (que solo son semanales). Además para la generación de datos definimos una dependencia temporal, ya que no seria lógico que hoy hubiese olas de dos metros y a las 12 horas el mar este en calma.</p>
 <p>Estudiaremos varias variables como la altura de la ola, la energía, la dirección del viento y el estado del viento. Queremos analizar si podemos describir de manera significante la altura y la energía en función del viento. También que en el paso del tiempo hay una mejora de la calidad de la hola hasta que se pierde la energia.</p>
-<p>Este estudio lo haremos para una playa orientada hacia el nor-este, es decir, si miramos al agua estaremos mirando hacia el nor-este. En concreto és la zona de Son Serra de Marina en Mallorca, vease la siguiente imagen:</p>
-<p>Utilizaremos datos de <a href="style=%22display:%20block;%20margin-left:%20auto;%20margin-right:%20auto;%22">enlace datos</a></p>
+<p>Este estudio lo haremos para una playa orientada hacia el norte. En concreto és la zona de Bilbao, vease la siguiente imagen:</p>
+<p>Hemos elegido este lugar debido a la regularidad costera del mar cantábrico, donde por norma general siempre hay olas en mayor o menor medida.</p>
+<p>Nuestra hipótesis és que después de un dia de mucho viento obtenemos una mayor calidad de olas.</p>
+<p>El objetivo de este proyecto es aportar un modelo de predicción del oleaje a partir de datos como el viento. También definiremos un SurfRating para definir la calidad de la ola para hacer surf, y estudiar las probabilidades de un buen dia de surf. Entonces queremos <em>comprobar que después de un dia de más viento hay buenas olas</em>.</p>
+<ul>
+<li>Como estudiaremos esta hipótesis?</li>
+</ul>
+<p>Lo primero sera definir una variable cualitativa ordinal que nos caracterize la calidad de la ola la cual llamaremos SurfRating (<span class="math inline">\(X\)</span>). Una vez definida esta variable <span class="math inline">\(X\)</span> queremos estudiar <span class="math inline">\(P(X \in A|_{Y|_{D_i}&gt;\mu_Y, D_{i+1} })\)</span> donde <span class="math inline">\(Y\)</span> es la variable que representa el viento y <span class="math inline">\(A\)</span> son los niveles de una buena calidad de olas.</p>
+<p>Primero estudiaremos la relación de los datos de manera atemporal, y veremos la relación del viento con la magnitud de las olas, la energía y el periodo. Que son las tres variables que nos definiran en mayor medida la calidad de la ola.</p>
+<ul>
+<li>Contraste <span class="math inline">\(X|_Y &gt; \mu_X\)</span></li>
+</ul>
+<p>Añadiremos la variable SST que indica la temperatura de la superficie del agua de la base de datos de <a href="">INTRODUCIR DATOS CON BIBLIOGRAFIA!</a></p>
 </section>
-<section id="primeros-pasos" class="level1">
-<h1>Primeros pasos</h1>
-<p>Para nuestro análisis trabajaremos con las siguientes variables:</p>
-<ul>
-<li><p>Cuantitativas: altura (m), velocidad viento (km/h), energía (kJ), periodo (s), temperatura del agua (ºC)</p></li>
-<li><p>Cualitativas: dirección viento, estado del viento</p></li>
-<li><p>Ordinales: fecha</p></li>
-</ul>
-<p>Añadiremos como variable ordinal la que se utiliza en Todo-Surf que indica que calidad tiene la ola para ser surfeada:</p>
-<p><em>NOTA</em>: Nos interesa para cada dia analizar varias horas, pero el problema es que a lo largo de un dia hay dependencia de lo que paso hace unas horas, también hay dependencia de lo que pudo pasar el dia anterior. Como nuestro interes del trabajo no es tanto un debate de como funciona la metereología y simplemente queremos generar una base de datos coherente supondremos normalidad de nuestras variables.</p>
-<p>Mallorca, al estar en zona mediterrania es muy complicado de crear una base de datos aleatoria coherente debido a que es una isla en medio del med. Optamos pues por estudiar Bilbao, que si tenemos unos datos mas normales.</p>
-<section id="definición-variables-cuantitativas" class="level2">
-<h2 class="anchored" data-anchor-id="definición-variables-cuantitativas">Definición Variables Cuantitativas</h2>
-<p>Definimos las variables:</p>
-<ul>
-<li><span class="math inline">\(X_1\)</span>: velocidad del viento en nudos</li>
-<li><span class="math inline">\(X_2\)</span>: energía de las olas en kJ</li>
-<li><span class="math inline">\(X_3\)</span>: periodo de las olas en segundos</li>
-<li><span class="math inline">\(X_4\)</span>: altura de las olas en metros</li>
-</ul>
-<p>Entonces definiremos nuestra base de datos como:</p>
+<section id="analisis-exploratorio" class="level1">
+<h1>Analisis exploratorio:</h1>
+<p>Observemos nuestros datos. En el estudio de () salió que el termostato de la bolla fallo algunos dias, lo podemos observar en la siguiente tabla. Entonces deberemos filtrar estos datos</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>covarianza <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">c</span>(<span class="dv">13</span>, <span class="dv">77</span> ,<span class="dv">6</span> ,  <span class="fl">0.2</span>, </span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>                       <span class="dv">77</span>  ,<span class="dv">5000</span>,<span class="dv">134</span>, <span class="dv">10</span>, </span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>                       <span class="dv">6</span>  ,<span class="dv">134</span> , <span class="dv">6</span> , <span class="fl">0.12</span>, </span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>                       <span class="fl">0.2</span>   , <span class="dv">10</span> , <span class="fl">0.12</span>, <span class="fl">0.05</span>), <span class="at">ncol =</span> <span class="dv">4</span>, <span class="at">byrow =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>medias <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">8</span>, <span class="dv">164</span>, <span class="dv">8</span>, <span class="fl">1.4</span>)</span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">43</span>)</span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>datos_numericos <span class="ot">&lt;-</span> (<span class="fu">mvrnorm</span>(<span class="dv">150</span>, <span class="at">mu =</span> medias, covarianza) </span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>                    <span class="sc">%&gt;%</span> <span class="fu">pmax</span>(., <span class="dv">0</span>) <span class="sc">%&gt;%</span> <span class="fu">as.tibble</span>())</span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(datos_numericos) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">'V'</span>,<span class="st">'En'</span>,<span class="st">'P'</span>,<span class="st">'A'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Rows: 150
+Columns: 8
+$ V   &lt;dbl&gt; 11.532252, 12.754143, 7.625695, 12.430652, 6.715388, 2.584285, 13.…
+$ En  &lt;dbl&gt; 225.38187, 181.72096, 219.07680, 206.88792, 156.24829, 103.84986, …
+$ P   &lt;dbl&gt; 11.027286, 9.362339, 13.589859, 9.962744, 13.377111, 10.171574, 8.…
+$ A   &lt;dbl&gt; 1.3874354, 1.4052574, 1.3841311, 1.6291357, 1.0473364, 0.9023950, …
+$ DV  &lt;chr&gt; "S", "NE", "N", "E", "SW", "E", "NE", "SW", "N", "W", "N", "S", "N…
+$ M   &lt;chr&gt; "ALTA", "ALTA", "BAJA", "BAJA", "BAJA", "ALTA", "BAJA", "ALTA", "A…
+$ DAT &lt;date&gt; 2017-02-26, 2017-02-27, 2017-02-28, 2017-05-30, 2017-05-19, 2017-…
+$ SST &lt;dbl&gt; -99.90, -99.90, -99.90, 22.15, 22.20, 22.65, 22.70, 22.75, 22.75, …</code></pre>
+</div>
+</div>
+<p>Observamos que trabajamos con 8 variables, en el siguiente oren:</p>
+<ul>
+<li><em>Viento</em> en nudos</li>
+<li><em>Energía</em> en kJ</li>
+<li><em>Periodo</em> em segundos</li>
+<li><em>Altura</em> de la ola en metros</li>
+<li><em>Dirección viento</em> que puede tomar los valores: Norte (N), Este(E), Oeste(W), Sud(S), Nor-este(NE), Nor-oeste(NW), sureste(SE) y suroeste (SW)</li>
+<li><em>Marea</em> que puede ser alta o baja (en nuestro experimento hacemos una medición con la marea alta y otra con la marea baja, que serian cada 12 horas)</li>
+<li><em>Fecha</em> que es el dia y hora de la medición</li>
+<li><em>SST</em>, Surface Sea Temperature, una variable de la base de datos <a href="">esta</a></li>
+</ul>
+<p>Para hacer un estudio de nuestras variables primero reoordenaremos nuestros datos y filtremos en los que fallo el termostato:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>datos <span class="ot">&lt;-</span> datos[,<span class="fu">c</span>(<span class="st">'DAT'</span>,<span class="st">'V'</span>,<span class="st">'En'</span>,<span class="st">'P'</span>,<span class="st">'SST'</span>,<span class="st">'A'</span>,<span class="st">'DV'</span>,<span class="st">'M'</span>)]</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>datos <span class="ot">&lt;-</span> datos <span class="sc">%&gt;%</span> <span class="fu">filter</span>(SST <span class="sc">&gt;</span> <span class="dv">0</span>)</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>datos_numericos <span class="ot">&lt;-</span> datos <span class="sc">%&gt;%</span> dplyr<span class="sc">::</span><span class="fu">select</span>(V,En,P,SST,A)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Calculemos la varianza generalizada y la varianza total. Estos dos datos nos dice la dispersión de nuestras observaciones y</p>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Varianza total:  878.198440300497"</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Varianza generalizada:  2653.25791012541"</code></pre>
+</div>
+</div>
+<p>Pues observamos que obtenemos datos bastante dispersos sin embargo al mirar la matriz vemos que la variable que aporta toda esta dispersión es en mayor proporción la energía, de hecho observemos estos valores cuando no tenemos en cuenta la energia:</p>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Varianza total:  2.77657231566631"</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Varianza generalizada:  23.2199832991468"</code></pre>
+</div>
+</div>
+<p>Hacemos un analisis de las relaciones de nuestras variables con un mapa de calor, asi podremos estudiar cual de nuestros objetivos para probar la hipótesis puede resultar más interesante. Observemos el siguiente mapa de calor</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>datos_numericos <span class="sc">%&gt;%</span> <span class="fu">cor</span>(.) <span class="sc">%&gt;%</span> <span class="fu">ggcorrplot</span>(<span class="at">hc.order =</span><span class="cn">TRUE</span>, <span class="at">lab =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>        <span class="at">colors =</span> <span class="fu">c</span>(<span class="st">"#2F9AA1"</span>,</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>                    <span class="st">"white"</span>, <span class="st">"#E14120"</span>), <span class="at">method =</span> <span class="st">'square'</span>) <span class="sc">+</span> <span class="fu">ggtitle</span>(<span class="st">'Mapa de calor. Correlaciones'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="UntitledQMD_files/figure-html/unnamed-chunk-8-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Como podemos observar hay una alta correlación positiva entre el viento y la altura de las olas. Y la altura tiene una relación positiva con la energía. Sin embargo, como veremos después una disminución del periodo viene relacionado con peores olas, y la matriz de correlaciones nos indica que un aumento del viento puede llevar a una disminución del periodo.</p>
+</section>
+<section id="surf-rating" class="level1">
+<h1>Surf-Rating</h1>
+<p>El surf-rating se definira como una variable cualitativa de 6 niveles. Esta variable indicará la calidad de la ola para hacer surf siendo 1 muy mala y 6 muy buena. Niveles:</p>
+<ul>
+<li><em>Baja y poca fuerza (BPF)</em>: Olas de menos de 0.5 metros o de energia menor que 80kJ.</li>
+<li><em>Olas bajas (B)</em>: Olas de entre 0.6 y 0.9 metros, con una energía mayor de 80 kJ.</li>
+<li><em>Oleaje medio movido (MM)</em>: Olas de entre 1 y 1.4 metros, con viento a sur, sur-osete o sur-este.</li>
+<li><em>Oleaje medio glass (MG)</em>: Olas de entre 1 y 1.4 metros, con viento de tierra.</li>
+<li><em>Oleaje alto movido (AM)</em>: Olas de mas de 1.5 metros, con viento a sur.</li>
+<li><em>Oleaje alto glass (AG)</em>: Olas de mas de 1.5 metros, con viento de tierra.</li>
+</ul>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>datos <span class="ot">&lt;-</span> datos <span class="sc">%&gt;%</span> <span class="fu">mutate</span>(<span class="at">SurfR =</span> <span class="fu">case_when</span>(</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>    (A <span class="sc">&lt;=</span> <span class="fl">0.5</span> <span class="sc">|</span> En <span class="sc">&lt;</span> <span class="dv">80</span>) <span class="sc">~</span> <span class="st">"BPF"</span>,  </span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    (A <span class="sc">&gt;=</span> <span class="fl">0.6</span> <span class="sc">&amp;</span> A <span class="sc">&lt;=</span> <span class="fl">0.9</span>) <span class="sc">~</span> <span class="st">"B"</span>,</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>    (A <span class="sc">&gt;=</span> <span class="dv">1</span> <span class="sc">&amp;</span> A <span class="sc">&lt;=</span> <span class="fl">1.4</span> <span class="sc">&amp;</span> DV <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"S"</span>, <span class="st">"SW"</span>, <span class="st">"SE"</span>, <span class="st">"W"</span>, <span class="st">"E"</span>)) <span class="sc">~</span> <span class="st">"MM"</span>,</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>    (A <span class="sc">&gt;=</span> <span class="dv">1</span> <span class="sc">&amp;</span> A <span class="sc">&lt;=</span> <span class="fl">1.4</span> <span class="sc">&amp;</span> DV <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"N"</span>, <span class="st">"NW"</span>, <span class="st">"NE"</span>)) <span class="sc">~</span> <span class="st">"MG"</span>, </span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>    (A <span class="sc">&gt;</span> <span class="fl">1.4</span> <span class="sc">&amp;</span> DV <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"S"</span>, <span class="st">"SW"</span>, <span class="st">"SE"</span>, <span class="st">"W"</span>, <span class="st">"E"</span>)) <span class="sc">~</span> <span class="st">"AM"</span>,  </span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>    (A <span class="sc">&gt;</span> <span class="fl">1.4</span> <span class="sc">&amp;</span> DV <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"N"</span>, <span class="st">"NW"</span>, <span class="st">"NE"</span>)) <span class="sc">~</span> <span class="st">"AG"</span>,</span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>    <span class="cn">TRUE</span> <span class="sc">~</span> <span class="cn">NA_character_</span>  <span class="co"># Para cualquier otro caso (opcional), asignar NA</span></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>  ))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Esta variable sera muy interesante para el surfista. Asi que la modelizamos con una multinomial.</p>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code>multiN_data
+        AG         AM          B        BPF         MG         MM 
+0.11510791 0.17985612 0.01438849 0.09352518 0.23741007 0.35971223 </code></pre>
+</div>
+</div>
+<p>Para el surfista de nivel medio que va a estar un puente en Bilbao le interesa saber que cual es la probabilidad de que en 4 dias haya al menos un dia de olas medias glass (MG) es decir <span class="math inline">\(P(MG \geq 1)\)</span>.</p>
+<p>Si tenemos un <span class="math inline">\(M(4,p_{AG},p_{AM},p_{BPF},p_{MG},p_{MM})\)</span> entonces:</p>
+<p><span class="math display">\[
+P(MG \geq 1) = 1 - P(MG = 0)
+\]</span></p>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Probabilidad de que un dia haya olas medias con viento de tierra:  0.701"</code></pre>
+</div>
+</div>
+<p>Otro factor importante de la calidad de la ola es el periodo, entonces la última variable que definira la calidad de la ola es el Periodo.</p>
+</section>
+<section id="descripción-por-regresión-lineal" class="level1">
+<h1>Descripción por regresión lineal</h1>
+<p>Supongamoos ahora que nuestra boya mide el periodo, la altura y tenemos un medidor de la velocidad del viento. Entonces intentaremos diseñar un modelo de regresión lineal para aproximar cual seria la energía.</p>
+<p>Lo hacemos de esta manera porque muchas veces es complicado medir la energía que tiene una ola, sin embargo si disponemos de una bolla y un () podremos saber cuales son los datos. La energía de la ola es un dato importante para el surfista porque así sabra si el tipo de ola es el adequado para la tabla que utiliza y su experiencia.</p>
+<p>En el análisis exploratorio de nuestras variables hemos visto que podíamos suponer normalidad en la energía pero no era así para la temperatura. Entonces para poder suponer que nuestro modelo lineal sigue una normal, y visto la baja correlación de estas dos variables no tendremos en cuenta la temperatura. Entonces si <span class="math inline">\(X1,X2\)</span> y <span class="math inline">\(X3\)</span> son los datos viento, la altura y el periodo respectivamente deseamos crear un modelo de la forma:</p>
+<p><span class="math display">\[ Y = \beta_0 + \beta_1X_1+\beta_2X_2 + \beta_3X_3 + \epsilon\]</span> Y estimar los parámetros <span class="math inline">\(\beta_0,\beta_1,\beta_2,\beta_3\)</span>. En este análisis <span class="math inline">\(\epsilon\)</span> es el termino de error y sigue una multinormal centrada en el cero y homocedática. Entonces <span class="math inline">\(Y\sim \mathcal{N}(X\beta,\sigma^2I)\)</span> donde <span class="math inline">\(X = (\underline{1},X_1,X_2,X_3)\)</span> y <span class="math inline">\(\beta = (\beta_0, \beta_1,\beta_2,\beta_3)^T\)</span>.</p>
+<p><span class="math display">\[
+f_{\beta, \sigma^2}(Y) = \frac{1}{(2\pi\sigma^2)^{\frac{n}{2}}}exp\left\{-\frac{1}{\sigma^2}(Y-X\beta)^T(Y-X\beta) \right\}
+\]</span> <span class="math display">\[
+l_Y(\beta,\sigma^2) = log(f_{\beta,\sigma^2}(Y))
+\]</span> <span class="math display">\[
+\frac{\partial l_Y}{\partial\beta}(\beta,\sigma^2) = \frac{1}{\sigma^2}X^T(Y-X\beta) =: Score(\beta)
+\]</span></p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>X <span class="ot">&lt;-</span> datos_numericos <span class="sc">%&gt;%</span> dplyr<span class="sc">::</span><span class="fu">select</span>(V,P,A) <span class="sc">%&gt;%</span> <span class="fu">mutate</span>(<span class="at">V1 =</span> <span class="dv">1</span>)</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>X <span class="ot">&lt;-</span> X[,<span class="fu">c</span>(<span class="st">'V1'</span>,<span class="st">'V'</span>,<span class="st">'P'</span>,<span class="st">'A'</span>)] <span class="sc">%&gt;%</span> <span class="fu">as.matrix</span>()</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>Y <span class="ot">&lt;-</span> datos_numericos <span class="sc">%&gt;%</span> dplyr<span class="sc">::</span><span class="fu">select</span>(En) <span class="sc">%&gt;%</span> <span class="fu">as.matrix</span>()</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>Score <span class="ot">&lt;-</span> <span class="cf">function</span>(b){</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(<span class="fu">t</span>(X)<span class="sc">%*%</span>(Y<span class="sc">-</span>X<span class="sc">%*%</span>b))</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Entonces ya podemos definir la función</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>regresion <span class="ot">&lt;-</span> <span class="fu">summary</span>(<span class="fu">lm</span>(Y <span class="sc">~</span> X[,<span class="dv">2</span>]<span class="sc">+</span> X[,<span class="dv">3</span>] <span class="sc">+</span> X[,<span class="dv">4</span>]))<span class="sc">$</span>coefficients[,<span class="dv">1</span>] <span class="sc">%&gt;%</span> <span class="fu">as.matrix</span>()</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>recta_r <span class="ot">&lt;-</span> <span class="cf">function</span>(x1,x2,x3){</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>  v <span class="ot">=</span> <span class="fu">matrix</span>(<span class="fu">c</span>(<span class="dv">1</span>,x1,x2,x3), <span class="at">ncol =</span> <span class="dv">4</span>)</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(v<span class="sc">%*%</span>regresion)</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a><span class="fu">Score</span>(regresion)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>             En
+V1 4.276046e-11
+V  3.467129e-10
+P  4.388214e-10
+A  5.604495e-11</code></pre>
+</div>
 </div>
 </section>
-<section id="definición-variables-cualitativas" class="level2">
-<h2 class="anchored" data-anchor-id="definición-variables-cualitativas">Definición Variables Cualitativas</h2>
-<p>Definimos las variables no ordinales:</p>
-<ul>
-<li><span class="math inline">\(X_5\)</span>: dirección del viento</li>
-<li><span class="math inline">\(X_6\)</span>: marea</li>
-</ul>
+<section id="contraste-de-la-hipótesis" class="level1">
+<h1>Contraste de la hipótesis</h1>
+<section id="como-afecta-la-dirección-del-viento-a-las-características-de-la-ola" class="level3">
+<h3 class="anchored" data-anchor-id="como-afecta-la-dirección-del-viento-a-las-características-de-la-ola">Como afecta la dirección del viento a las características de la ola?</h3>
+<p>Definiremos dos ‘poblaciones’ en función de la dirección del viento y realizamos un test del tipo:</p>
+<p><span class="math display">\[
+H_0: \mathbb{\mu_1} = \mu_2
+\]</span> Pero siguen nuestras distribuciones una multinomial? Si realizamos un test de normalidad de cada una de las variables observamos que si, exceptuando la temperatura que no la tendremos en cuenta por la baja correlación (Test de independencia?).</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>direccion_viento <span class="ot">&lt;-</span> <span class="fu">sample</span>(<span class="fu">c</span>(<span class="st">'N'</span>,<span class="st">'W'</span>,<span class="st">'S'</span>,<span class="st">'E'</span>,<span class="st">'NW'</span>,<span class="st">'NE'</span>,<span class="st">'SW'</span>,<span class="st">'SE'</span>),<span class="dv">150</span>, <span class="at">replace =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>marea <span class="ot">&lt;-</span> <span class="fu">sample</span>(<span class="fu">c</span>(<span class="st">'ALTA'</span>,<span class="st">'BAJA'</span>),<span class="dv">150</span>, <span class="at">replace =</span> <span class="cn">TRUE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu">colMeans</span>(Y_mar)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>         V         En          P          A 
+  7.825984 160.285474  10.050686   1.276616 </code></pre>
 </div>
-<p>Definimos las variables ordinales:</p>
-<ul>
-<li><span class="math inline">\(X_7\)</span>: fecha</li>
-<li><span class="math inline">\(X_8\)</span>: Douglas: Esta variable es una escala que nos dice que nos da una descripción del mar en función del viento. Podemos encontrar esta descripción en el <a href="">AEMET</a></li>
-<li><span class="math inline">\(X_9\)</span>: Surf_Rating: Esta variable nos da un SCORE del 1 al 5 para la calidad de surf de la ola. Puntuara más alto olas grandes con viento de tierra, y más bajo para olas pequeñas con viento de mar.</li>
-</ul>
-<p>Definimos entonces nuestro dataframe:</p>
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="fu">colMeans</span>(Y_tierra)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>         V         En          P          A 
+  7.833566 148.595634   9.685664   1.267921 </code></pre>
+</div>
+</div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>primer_dia <span class="ot">&lt;-</span> <span class="fu">as.Date</span>(<span class="st">"2023-2-28"</span>)</span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>fechas <span class="ot">&lt;-</span> <span class="fu">seq</span>(<span class="at">from =</span> primer_dia, <span class="at">by =</span><span class="st">'day'</span>, <span class="at">length.out =</span> <span class="dv">150</span>) </span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>datos_cual <span class="ot">&lt;-</span> <span class="fu">tibble</span>(<span class="at">DV =</span> direccion_viento,</span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>                    <span class="at">M  =</span> marea,</span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>                    <span class="at">DAT =</span> fechas)</span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>datos <span class="ot">&lt;-</span> <span class="fu">tibble</span>(datos_numericos,datos_cual)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Test stat:  2.6951 
+Numerator df:  4 
+Denominator df:  118 
+P-value:  0.623 </code></pre>
+</div>
+</div>
+</section>
+</section>
+<section id="comparación" class="level1">
+<h1>Comparación</h1>
+</section>
+<section id="conclusión" class="level1">
+<h1>Conclusión</h1>
+</section>
+<section id="bibliografia" class="level1">
+<h1>Bibliografia</h1>
+</section>
+<section id="anexo" class="level1">
+<h1>Anexo</h1>
+<section id="construcción-de-la-base-de-datos" class="level2">
+<h2 class="anchored" data-anchor-id="construcción-de-la-base-de-datos">Construcción de la base de datos</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>covarianza <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">c</span>(<span class="dv">13</span>, <span class="dv">77</span>, <span class="sc">-</span><span class="dv">2</span>, <span class="fl">0.25</span>,</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>                       <span class="dv">77</span>, <span class="dv">5000</span>, <span class="dv">134</span>, <span class="dv">10</span>,</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>                       <span class="sc">-</span><span class="dv">2</span>, <span class="dv">134</span>, <span class="dv">6</span>, <span class="fl">0.12</span>,</span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>                       <span class="fl">0.25</span>, <span class="dv">10</span>, <span class="fl">0.12</span>, <span class="fl">0.05</span>), <span class="at">ncol =</span> <span class="dv">4</span>, <span class="at">byrow =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>medias <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">8</span>, <span class="dv">164</span>, <span class="dv">10</span>, <span class="fl">1.3</span>)</span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">43</span>)</span>
+<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a>datos_numericos <span class="ot">&lt;-</span> <span class="fu">mvrnorm</span>(<span class="dv">150</span>, <span class="at">mu =</span> medias, covarianza) <span class="sc">%&gt;%</span> <span class="fu">as.tibble</span>()</span>
+<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(datos_numericos) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">'V'</span>,<span class="st">'En'</span>,<span class="st">'P'</span>,<span class="st">'A'</span>)</span>
+<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Limitamos a resultados realistas</span></span>
+<span id="cb19-13"><a href="#cb19-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-14"><a href="#cb19-14" aria-hidden="true" tabindex="-1"></a>datos_numericos <span class="ot">&lt;-</span> datos_numericos <span class="sc">%&gt;%</span></span>
+<span id="cb19-15"><a href="#cb19-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb19-16"><a href="#cb19-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">V =</span> <span class="fu">pmax</span>(V, <span class="dv">0</span>),    </span>
+<span id="cb19-17"><a href="#cb19-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">En =</span> <span class="fu">pmin</span>(<span class="fu">pmax</span>(En, <span class="dv">1</span>), <span class="dv">5000</span>),  <span class="co"># Energía entre 1 y 5000</span></span>
+<span id="cb19-18"><a href="#cb19-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">P =</span> <span class="fu">pmin</span>(<span class="fu">pmax</span>(P, <span class="dv">5</span>), <span class="dv">20</span>),      <span class="co"># Periodo entre 5 y 20 s</span></span>
+<span id="cb19-19"><a href="#cb19-19" aria-hidden="true" tabindex="-1"></a>    <span class="at">A =</span> <span class="fu">pmin</span>(<span class="fu">pmax</span>(A, <span class="dv">0</span>), <span class="dv">20</span>)      <span class="co"># Altura entre 0 y 20 m</span></span>
+<span id="cb19-20"><a href="#cb19-20" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb19-21"><a href="#cb19-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-22"><a href="#cb19-22" aria-hidden="true" tabindex="-1"></a><span class="co"># Añadimos una dependencia temporal</span></span>
+<span id="cb19-23"><a href="#cb19-23" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">2</span><span class="sc">:</span><span class="fu">nrow</span>(datos_numericos)) {</span>
+<span id="cb19-24"><a href="#cb19-24" aria-hidden="true" tabindex="-1"></a>  datos_numericos<span class="sc">$</span>A[i] <span class="ot">&lt;-</span> <span class="fl">0.3</span> <span class="sc">*</span> datos_numericos<span class="sc">$</span>A[i <span class="sc">-</span> <span class="dv">1</span>] <span class="sc">+</span> </span>
+<span id="cb19-25"><a href="#cb19-25" aria-hidden="true" tabindex="-1"></a>    <span class="fl">0.5</span> <span class="sc">*</span> datos_numericos<span class="sc">$</span>A[i] <span class="sc">+</span> (datos_numericos<span class="sc">$</span>V[i]<span class="sc">/</span><span class="dv">8</span><span class="sc">*</span><span class="fl">1.3</span>)<span class="sc">*</span><span class="fl">0.2</span></span>
+<span id="cb19-26"><a href="#cb19-26" aria-hidden="true" tabindex="-1"></a>  datos_numericos<span class="sc">$</span>En[i] <span class="ot">&lt;-</span> <span class="fl">0.3</span> <span class="sc">*</span> datos_numericos<span class="sc">$</span>En[i <span class="sc">-</span> <span class="dv">1</span>] <span class="sc">+</span> </span>
+<span id="cb19-27"><a href="#cb19-27" aria-hidden="true" tabindex="-1"></a>    <span class="fl">0.7</span> <span class="sc">*</span> datos_numericos<span class="sc">$</span>En[i]</span>
+<span id="cb19-28"><a href="#cb19-28" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb19-29"><a href="#cb19-29" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb19-30"><a href="#cb19-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-31"><a href="#cb19-31" aria-hidden="true" tabindex="-1"></a><span class="co"># Suponemos que nuestra bolla mide cada 12 horas</span></span>
+<span id="cb19-32"><a href="#cb19-32" aria-hidden="true" tabindex="-1"></a>direccion_viento <span class="ot">&lt;-</span> <span class="fu">sample</span>(<span class="fu">c</span>(<span class="st">'N'</span>,<span class="st">'W'</span>,<span class="st">'S'</span>,<span class="st">'E'</span>,</span>
+<span id="cb19-33"><a href="#cb19-33" aria-hidden="true" tabindex="-1"></a>                             <span class="st">'NW'</span>,<span class="st">'NE'</span>,<span class="st">'SW'</span>,<span class="st">'SE'</span>),<span class="dv">150</span>, <span class="at">replace =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb19-34"><a href="#cb19-34" aria-hidden="true" tabindex="-1"></a>marea <span class="ot">&lt;-</span> <span class="fu">sample</span>(<span class="fu">c</span>(<span class="st">'ALTA'</span>,<span class="st">'BAJA'</span>),<span class="dv">150</span>, <span class="at">replace =</span> <span class="cn">TRUE</span>) <span class="co"># Cambiar a alternado</span></span>
+<span id="cb19-35"><a href="#cb19-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-36"><a href="#cb19-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-37"><a href="#cb19-37" aria-hidden="true" tabindex="-1"></a>primer_dia <span class="ot">&lt;-</span> <span class="fu">as.Date</span>(<span class="st">"2017-01-01"</span>) </span>
+<span id="cb19-38"><a href="#cb19-38" aria-hidden="true" tabindex="-1"></a>fechas <span class="ot">&lt;-</span> <span class="fu">seq</span>(<span class="at">from =</span> primer_dia, <span class="at">by =</span><span class="st">'day'</span>, <span class="at">length.out =</span> <span class="dv">150</span>) </span>
+<span id="cb19-39"><a href="#cb19-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-40"><a href="#cb19-40" aria-hidden="true" tabindex="-1"></a>datos_cual <span class="ot">&lt;-</span> <span class="fu">tibble</span>(<span class="at">DV =</span> direccion_viento,</span>
+<span id="cb19-41"><a href="#cb19-41" aria-hidden="true" tabindex="-1"></a>                    <span class="at">M  =</span> marea,</span>
+<span id="cb19-42"><a href="#cb19-42" aria-hidden="true" tabindex="-1"></a>                    <span class="at">DAT =</span> fechas)</span>
+<span id="cb19-43"><a href="#cb19-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-44"><a href="#cb19-44" aria-hidden="true" tabindex="-1"></a>datos <span class="ot">&lt;-</span> <span class="fu">tibble</span>(datos_numericos,datos_cual)</span>
+<span id="cb19-45"><a href="#cb19-45" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-46"><a href="#cb19-46" aria-hidden="true" tabindex="-1"></a>kaggle_data <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="st">'kaggle_data.csv'</span>,<span class="at">header =</span> <span class="cn">TRUE</span>) </span>
+<span id="cb19-47"><a href="#cb19-47" aria-hidden="true" tabindex="-1"></a>datos_nuevos <span class="ot">&lt;-</span> kaggle_data  <span class="sc">%&gt;%</span>  <span class="fu">filter</span>(<span class="fu">grepl</span>(<span class="st">'12:00'</span>,Date.Time)) <span class="sc">%&gt;%</span> dplyr<span class="sc">::</span><span class="fu">select</span>(Date.Time,SST)</span>
+<span id="cb19-48"><a href="#cb19-48" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-49"><a href="#cb19-49" aria-hidden="true" tabindex="-1"></a>datos_nuevos <span class="ot">&lt;-</span> datos_nuevos <span class="sc">%&gt;%</span> <span class="fu">mutate</span>(</span>
+<span id="cb19-50"><a href="#cb19-50" aria-hidden="true" tabindex="-1"></a>  <span class="at">Date.Time =</span> <span class="fu">seq</span>(<span class="at">from =</span> primer_dia, <span class="at">by =</span><span class="st">'day'</span>,<span class="at">length.out =</span> </span>
+<span id="cb19-51"><a href="#cb19-51" aria-hidden="true" tabindex="-1"></a>                                                  <span class="fu">length</span>(datos_nuevos<span class="sc">$</span>Date.Time))) </span>
+<span id="cb19-52"><a href="#cb19-52" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(datos_nuevos) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">'DAT'</span>,<span class="st">'SST'</span>)</span>
+<span id="cb19-53"><a href="#cb19-53" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-54"><a href="#cb19-54" aria-hidden="true" tabindex="-1"></a>datos <span class="ot">&lt;-</span> datos <span class="sc">%&gt;%</span> <span class="fu">right_join</span>(datos_nuevos) <span class="sc">%&gt;%</span> <span class="fu">slice</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">150</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
 </section>
