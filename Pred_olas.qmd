@@ -34,9 +34,9 @@ library(patchwork)
 
 # Introducción
 
-La predicción de la situación costera es muy importante para logística portuaria, para la pesca, para la seguridad de zonas costeras y para cualquier aficionado al deporte. El ayuntamiento de Bilbao dispone de una boya para medir la altura de una ola y su periodo. en la playa de Arrietaram una playa muy concurrida por los surfistas. Además disponen de un anómetro costero para medir también el viento. Entonces quieremos proporcionar una predicción del oleaje y la calidad de la ola para hacer surf, asi ayudamos a los  y las surfistas que frecuentan estas playas.
+La predicción de la situación costera es muy importante para logística portuaria, para la pesca, para la seguridad de zonas costeras y para cualquier aficionado al deporte. El ayuntamiento de Bilbao dispone de una boya para medir la altura de una ola y su periodo en la playa de Arrietaram, una playa muy concurrida por los surfistas. Además disponen de un anómetro costero para medir también el viento. En este proyecto queremos proporcionar una predicción del oleaje y la calidad de la ola para hacer surf, asi ayudamos a los  y las surfistas que frecuentan estas playas.
 
-Sin embargo no puedemos medir la energía de las olas. Entonces han alquilado una boya a la empresa datawell para que tambien les mida la energía de las olas durante 100 días, una vez por la mañana con marea alta y otra por la tarde con marea baja.
+Un factor importante de la ola para el surfista es la energía ya que és una medida de con cuanta fuerza empujará la ola. Sin embargo no puedemos medir la energía de las olas con la boya que disponemos. Entonces han alquilado una boya a la empresa datawell para que tambien les mida la energía de las olas durante 100 días, una vez por la mañana con marea alta y otra por la tarde con marea baja.
 
 <div style="text-align: center;">
   <img src="playa.jpg" alt="Arrietaram" width="250px"  >
@@ -46,7 +46,7 @@ Para proporcionar una web de predicción del oleaje modelizaremos la energía de
 
 Las muestras de datos són aleatorias generadas a partir de funciones de R. Para aportar realismo hemos hecho una interpretación de datos que hemos obtenido de aplicaciones como WindGuru, Windy o TodoSurf (que solo son semanales). Además para la generación de datos definimos una dependencia temporal, ya que no seria lógico que hoy hubiese olas de dos metros y a las 12 horas el mar este en calma.
 
-Planteamos la hipotesis de que un viento de tierra viene relacionado con una disminución de la energía y la altura, pero un aumento del periodo. Y que para un viento de mar provoca el efecto contrario. Para hacer este contraste realizaremos un contraste de medias restringiendo nuestros datos a los dos tipos de viento. Además veremos que la temperatura del agua no influye en las características de la ola.
+Planteamos la hipotesis de que un viento de tierra viene relacionado con una disminución de la energía y la altura, pero un aumento del periodo. Y que para un viento de mar provoca el efecto contrario. Para hacer este contraste realizaremos un contraste de medias restringiendo nuestros datos a los dos tipos de viento. Además veremos que definiendo una calidad de la ola, esta relacionado con una media de la energía más alta.
 
 
 ```{r, echo=FALSE, message=FALSE}
@@ -117,7 +117,7 @@ names(datos_nuevos) <- c('DAT','SST')
 datos <- datos %>% right_join(datos_nuevos) 
 ```
 
-Añadiremos la variable SST que indica la temperatura de la superficie del agua de la base de datos de [@author2023web]. Para los contrastes de hipótesis hemos utilizado los apuntes de [@apuntes]
+Añadiremos la variable SST que indica la temperatura de la superficie del agua de la base de datos de [@author2023web]. Hemos utilizado durante el proyecto resultadis teóricos de los apuntes de [@apuntes]
 
 # Analisis exploratorio:
 
@@ -135,20 +135,17 @@ Observamos que trabajamos con 8 variables, en el siguiente oren:
 -   *Dirección viento* que puede tomar los valores: Norte (N), Este(E), Oeste(W), Sud(S), Nor-este(NE), Nor-oeste(NW), sureste(SE) y suroeste (SW)
 -   *Marea* que puede ser alta o baja (en nuestro experimento hacemos una medición con la marea alta y otra con la marea baja, que serian cada 12 horas)
 -   *Fecha* que es el dia y hora de la medición 
--   *SST*, Surface Sea Temperature, una variable de la base de datos [esta]()
+-   *SST*, Surface Sea Temperature, una variable de la base de datos [@author2023web]
 
 
-Para hacer un estudio de nuestras variables primero reoordenaremos nuestros datos y filtremos en los que fallo el termostato:
-```{r, }
+Para hacer un estudio de nuestras variables primero reoordenaremos nuestros datos y filtremos en los que fallo el termostato. Calculemosentonces  la varianza generalizada y la varianza total. Estos dos datos nos dice la dispersión de nuestras observaciones, para tener una idea intuitiva de como son nuestros datos. Entonces obteemos los siguientes resultados: 
+
+
+```{r, echo=FALSE}
 datos <- datos[,c('DAT','V','En','P','SST','A','DV','M')]
 datos <- datos %>% filter(SST > 0)
 datos_numericos <- datos %>% dplyr::select(V,En,P,SST,A)
 
-```
-
-Calculemos la varianza generalizada y la varianza total. Estos dos datos nos dice la dispersión de nuestras observaciones y 
-
-```{r, echo=FALSE}
 S <- cov(datos_numericos)
 print(paste('Varianza total: ', as.character(det(S))))
 print(paste('Varianza generalizada: ',as.character(sum(diag(S)))))
@@ -177,7 +174,7 @@ Para realizar los futuros contrastes nos interesa saber si nuestras variables si
 # Surf-Rating
 
 
-El surf-rating se definira como una variable cualitativa de 6 niveles. Esta variable indicará la calidad de la ola para hacer surf siendo 1 muy mala y 6 muy buena. Niveles:
+El surf-rating se definira como una variable cualitativa de 6 niveles. Esta variable indicará un tipo de calidad de la ola para hacer surf, la calidad de la ola se expresa en orden creciente como:
 
 -   *Baja y poca fuerza (BPF)*: Olas de menos de 0.5 metros o de energia menor que 80kJ.
 -   *Olas bajas (B)*: Olas de entre 0.6 y 0.9 metros, con una energía mayor de 80 kJ.
@@ -186,7 +183,7 @@ El surf-rating se definira como una variable cualitativa de 6 niveles. Esta vari
 -   *Oleaje alto movido (AM)*: Olas de mas de 1.5 metros, con viento a sur.
 -   *Oleaje alto glass (AG)*: Olas de mas de 1.5 metros, con viento de tierra.
 
-```{r}
+```{r,echo=FALSE}
 datos <- datos %>% mutate(SurfR = case_when(
     (A <= 0.5 | En < 80) ~ "BPF",  
     (A >= 0.6 & A < 1) ~ "B",
@@ -198,16 +195,14 @@ datos <- datos %>% mutate(SurfR = case_when(
   ))
 ```
 
-Esta variable sera muy interesante para el surfista. 
-
-También añadiremos una condición de la ola en función del periodo clasificandolas en 4 estrellas.
+Esta variable sera muy interesante para el surfista. También añadiremos una condición de la ola en función del periodo clasificandolas en 4 estrellas. Cuanto mayor es un periodo más interesante es para el surfista, ya que hay un mayor tiempo de recuperación.
 
 -   *1 Estrella* : La ola es BPF,B o es MM con un periodo menor que 8.5
 -   *2 Estrellas*: La ola es MM con periodo mayor que 8.5 o MG con un periodo hasta 10
 -   *3 Estrellas*: La ola es MG con periodo mayor que 10 o AM, o AG con periodo hasta 10
 -   *4 Estrellas*: La ola es AG con un periodo mayor que 10
 
-```{r}
+```{r, echo=FALSE}
 datos <- datos %>% mutate(Stars = case_when(
     (SurfR %in% c('BPF','B')) ~ 1,
     (SurfR == 'MM' & P < 8.5) ~ 1,
@@ -222,7 +217,7 @@ datos <- datos %>% mutate(Stars = case_when(
 ```
 
 
-Ahora supongamos que un surfista se va un puente a Bilbao y le gustaria saber si tendra buenas olas. Para ello modelizamos con una multinomial $X = (X_1,X_2,X_3,X_4) $ donde $X_i$ es el número de dias que ha habido con una calidad de olas $i$. Entonces $X \sim Multinom(n,p_1,p_2,p_3,p_4)$ donde las $p_i$ son las siguientes probabilidades. 
+Ahora supongamos que un surfista se va un puente a Bilbao y le gustaria saber si tendra buenas olas. Para ello modelizamos con una multinomial $X = (X_1,X_2,X_3,X_4)$ donde $X_i$ es el número de dias que ha habido con una calidad de olas $i$. Entonces $X \sim \text{Multinom}(n,p_1,p_2,p_3,p_4)$ donde las $p_i$ son las siguientes probabilidades. 
 
 ```{r, echo=FALSE} 
 # Limpieza de datos y cálculo de probabilidades
@@ -233,30 +228,39 @@ probabilidades
 ```
 Para el surfista de nivel medio que va a estar un puente en Bilbao le interesa saber que cual es la probabilidad de que en 4 dias haya al menos un dia de olas de calidad 3 $P(MG \geq 1)$.
 
-Si tenemos un $Multinom(4,p_{AG},p_{AM},p_{BPF},p_{MG},p_{MM})$ entonces:
 
 $$
-P(MG \geq 1) = 1 - P(MG = 0)
+P(X_3 \geq 1) = 1 - P(X_3 = 0)
 $$
 ```{r, echo=FALSE}
 p = probabilidades[3]
 P = 1 - (1-p)^(4)
-print(paste('Probabilidad de que un dia haya olas medias con viento de tierra: ',
+print(paste('Probabilidad de que un dia haya olas de calidad 3: ',
             as.character(round(P,3))))
 ```
 
 Sin embargo a un surfista profesional le gustaria saber cuando debe comprarse el billete de vuelta para tener al menos un dia de calidad 4 con una probabilidad del 0.9.
 
+$$
+1-(1-p_4)^{n} \geq 0.9 \Longleftrightarrow log(0.1) \geq nlog(1-p_4) \Longleftrightarrow \frac{log(0.1)}{log(1-p_4)} \leq n
+$$
+```{r, echo=FALSE}
+log(0.1,10)/log(1-probabilidades[4],10)
+```
+
+Entonces el surfista debería ir un mes para poderse asegurar días de una calidad 4.
+
+
 # Descripción por regresión lineal
 
 Supongamoos ahora que nuestra boya mide el periodo, la altura y tenemos un medidor de la velocidad del viento. Entonces intentaremos diseñar un modelo de regresión lineal para aproximar cual seria la energía. 
 
-Lo hacemos de esta manera porque muchas veces es complicado medir la energía que tiene una ola, sin embargo si disponemos de una bolla y un () podremos saber cuales son los datos. La energía de la ola es un dato importante para el surfista porque así sabra si el tipo de ola es el adequado para la tabla que utiliza y su experiencia.
+La energía de la ola es un dato importante para el surfista porque así sabra si el tipo de ola es el adequado para la tabla que utiliza y su experiencia.
 
-En el análisis exploratorio de nuestras variables hemos visto que podíamos suponer normalidad en la energía pero no era así para la temperatura. Entonces para poder suponer que nuestro modelo lineal sigue una normal, y visto la baja correlación de estas dos variables no tendremos en cuenta la temperatura. Entonces si $X_1,X_2$ y $X_3$ son los datos viento, la altura y el periodo respectivamente deseamos crear un modelo de la forma:
+En el análisis exploratorio de nuestras variables hemos visto que podíamos suponer normalidad en la energía pero no era así para la temperatura, veremos que no es de gran relevancia esta variable. Entonces si $X_1,X_2,X_3$ y $X_4$ son los datos viento, la altura, el periodo y SST respectivamente deseamos crear un modelo de la forma:
 
-$$ Y = \beta_0 + \beta_1X_1+\beta_2X_2 + \beta_3X_3 + \epsilon$$
-Y estimar los parámetros $\beta = (\beta_0,\beta_1,\beta_2,\beta_3)$. En este análisis $\epsilon$ es el termino de error y sigue una multinormal centrada en el cero y homocedática. Entonces $Y\sim \mathcal{N}(X\beta,\sigma^2I)$ donde $X = (\underline{1},X_1,X_2,X_3)$. Si calculamos la función de densidad en función de los parámetros obenemos la siguiente formula:
+$$ Y = \beta_0 + \beta_1X_1+\beta_2X_2 + \beta_3X_3 + \beta_4X_4+\epsilon$$
+Y estimar los parámetros $\beta = (\beta_0,\beta_1,\beta_2,\beta_3,\beta_4)$. En este análisis $\epsilon$ es el termino de error y sigue una multinormal centrada en el cero y homocedática. Entonces $Y\sim \mathcal{N}(X\beta,\sigma^2I)$ donde $X = (\underline{1},X_1,X_2,X_3,X_4)$. Si calculamos la función de densidad en función de los parámetros obenemos la siguiente formula:
 
 
 $$
@@ -274,45 +278,55 @@ Finalmente estudiaremos la variación de esta función con la función Score que
 $$
 Score(\beta) := \frac{\partial l_Y}{\partial\beta}(\beta,\sigma^2) = \frac{1}{\sigma^2}X^T(Y-X\beta) 
 $$
+
 ```{r,echo=FALSE}
-X <- datos_numericos %>% dplyr::select(V,P,A) %>% mutate(V1 = 1)
-X <- X[,c('V1','V','P','A')] %>% as.matrix()
+X <- datos_numericos %>% dplyr::select(V,P,A,SST) %>% mutate(V1 = 1)
+X <- X[,c('V1','V','P','A','SST')] %>% as.matrix()
 Y <- datos_numericos %>% dplyr::select(En) %>% as.matrix()
-Score <- function(b){
-  return(t(X)%*%(Y-X%*%b))
-}
 ```
 
-Entonces con la función lm de R podemos calcular los coeficientes con la fórmula $(X^tX)^{-1}(X^tY)$ y verificar con la función Score 
+Entonces con la función lm de R podemos calcular los coeficientes con la fórmula $(X^tX)^{-1}(X^tY)$ y verificar con la función Score. Si hacemos el cálculo obtemos:
 
 
-```{r}
+```{r, echo=FALSE}
 b = solve(t(X)%*%X)%*%(t(X)%*%Y) 
 
-recta_r <- function(x1,x2,x3){
-  n = length(x1)
-  v = matrix(c(rep(1,n),x1,x2,x3), ncol = 4, byrow = FALSE)
-  return(v%*%b)
+Score <- function(b){
+  return(t(X)%*%(Y-X%*%b))
 }
 
 t(Score(b))
 ```
+Comprobando así que nos situamos aproximadamente en un máximo de verosimilitud.Son todas las variables relevantes? Cuando llamamos a la función lm() de R nos indica que valores son más o menos significantes en función del p-valor que aparece de hacer el contraste de hipótesis en que un factor $\beta_i = 0$. Entonces en nuestro caso el mayor p-valor es el de la temperatura. 
 
-Y como podemos observar la función de R nos define valores muy próximos a lo deseado. Observemos caunto nos desajustamos en las predicciones duranto los 100 dias
+```{r, echo = FALSE}
+summary(lm(Y ~ X[,2] + X[,3]+X[,4] + X[,5]))
+```
+
+Si consideramos $\beta_4 = 0$ y repetimos el proceso observamos que la medida de bondad de ajuste no se ve variada, y el viento sigue sin ser significante. Definiremos pues nuestro modelo lineal únicamente con el periodo y la altura.
+
+Y podemos observar en la siguiente gráfica que este modelo nos da valores muy próximos a lo deseado. 
 
 ```{r,echo=FALSE}
-graf1 <- datos %>% dplyr::select(DAT,En)
-graf2 <- datos %>% mutate(En2 = recta_r(datos$V,datos$P,datos$A)) %>% dplyr::select(DAT,En2)
+X <- X[,c(1,3,4)]
+b = solve(t(X)%*%X)%*%(t(X)%*%Y) 
+recta_r <- function(x1,x2){
+  n = length(x1)
+  v = matrix(c(rep(1,n),x1,x2), ncol = 3, byrow = FALSE)
+  return(v%*%b)
+}
+
+graf1 <- datos %>% dplyr::select(DAT,En) %>% slice(1:100)
+graf2 <- datos %>% mutate(En2 = recta_r(datos$P,datos$A)) %>% dplyr::select(DAT,En2) %>% slice(1:100)
 
 ggplot() +
-  geom_line(data = graf1, aes(x = DAT, y = En, color = "Y1", group = 1), size = 0.8) +
-  geom_line(data = graf2, aes(x = DAT, y = En2, color = "Y2", group = 1), size = 0.5) +
+  geom_line(data = graf1, aes(x = DAT, y = En, color = "observaciones", group = 1), size = 0.8) +
+  geom_line(data = graf2, aes(x = DAT, y = En2, color = "aproximaciones", group = 1), size = 0.5) +
   labs(title = "Valores reales frente la aproximación",
        x = "Días",
        y = "Energía de las olas") +
-  scale_color_manual(name = "Variables", values = c("Y1" = "blue", "Y2" = "red")) +
+  scale_color_manual(name = "Variables", values = c("observaciones" = "blue", "aproximaciones" = "red")) +
   theme_minimal()+theme(axis.text.x = element_blank())
-
 
 ```
 
@@ -332,7 +346,7 @@ Definiremos dos 'poblaciones' en función de la dirección del viento y realizam
 $$
 H_0: \mathbb{\mu_1} = \mu_2 
 $$
-Pero siguen nuestras distribuciones una multinomial? Si realizamos un test de normalidad de cada una de las variables observamos que si, exceptuando la temperatura que no la tendremos en cuenta por la baja correlación (Test de independencia?). Haremos un hotelling test nosotros y lo compararemos con la función de R.
+Pero siguen nuestras distribuciones una multinomial? Si realizamos un test de normalidad de cada una de las variables observamos que si, exceptuando la temperatura que no la tendremos en cuenta por la baja correlación y ya que estamos interesados en la energía. Haremos un hotelling test nosotros y lo compararemos con la función de R.
 
 Sabemos la relación de la F de fisher-Snedecor con la T-Hotteling es:
 
@@ -340,9 +354,9 @@ $$
 F^p_{m+p-1} = \frac{m+p-1}{mp}T^2(p,m)    
 $$
 
-Entonces lo utilizaremos para calcular el p-valor con la función pf de R. Después comparamos nuestro resultado con la función test.hotelling() del paquete Hotelling.
+Entonces lo utilizaremos para calcular el p-valor con la función pf de R. Después comparamos nuestro resultado con la función test.hotelling() del paquete Hotelling. Podemos ver el código de nuestra función en el anexo.
 
-```{r}
+```{r, echo=FALSE}
 # La siguiente función dado un valor de una T de Hotelling junto
 # sus grados de libertad nos calcula la probabilidad de un valor menor  o igual
 
@@ -395,10 +409,21 @@ print(hotelling.test(Y_mar,Y_tierra))
 
 ###   La calidad de la ola esta relacionada con una variación de la energía?
 
+Para este estudio nos gustaria combrovar que una mayor calidad viene relacionada con una mayor energía, veamos como son las medias en cada nivel:
+```{r, echo = FALSE}
 
-Para este contraste nos volvemos a definir dos subpoblaciones en función de si tienen dos estrellas o menos y si tienen 3 o más. Y hacemos un test de hotelling como el definido anteriormente. Y obtenemos los siguientes resultados:
+data_graf_stars <- datos %>% dplyr::select(En,Stars) %>% mutate(Stars = as.factor(Stars))
+names(data_graf_stars) <- c('Energia','Calidad')
+data_graf_stars <- data_graf_stars[,c('Calidad','Energia')]
 
-```{r}
+ggplot(data_graf_stars, aes(x = Calidad, y = Energia, fill = Calidad)) + geom_violin() +
+  labs(title = 'Energías segun las calidades') + geom_jitter()+ theme_minimal()
+
+```
+
+Aunque a simple vista parece que la respuesta es si, en el nivel 4 hay pocas observaciones teniendo en cuenta su probabilidad. Optaremos para este contraste definir dos subpoblaciones en función de si tienen dos estrellas o menos y si tienen 3 o más. Y hacemos un test de hotelling como el definido anteriormente. Y obtenemos los siguientes resultados:
+
+```{r, echo = FALSE}
 En12 <- datos %>% filter(Stars <= 2) %>% dplyr::select(En)
 En34 <- datos %>% filter(Stars >= 3) %>% dplyr::select(En)
 
@@ -413,18 +438,21 @@ ggplot(graf_stars, aes(x = Calidad, y = Energia, fill = Calidad)) + geom_violin(
 ```
 
 
-```{r}
-
-
+```{r, echo=FALSE}
 print(test_H(En12,En34))
 ```
+
 Este p-valor, indica una probabilidad muy baja de haber observado el valor del estadiístico suponiendo que las medias de las energías son iguales. Al ser el P-valor tan cercano a cero no sería muy verosímil nuestra hipótesis. Entonces la energía en las olas de mayor calidad esta desplazada (en concreto es mayor)
+
+
 
 
 
 # Conclusión
 
-Como hemos observado la energía es un factor importante para la calidad de la ola, y una mayor calidad de esta relacionado con una mayor energía. El  modelo de regresión para preveer la energía aunque hay errores que distan hasta 30kJ, aunque teniendo en cuenta la variabilidad de esta variable no son errores tran grandes. La magnitud de estos errores también pueden venir relacionadas con la dependencia temporal que hemos creado en la base de datos, ya que el modelo de regresión no tiene en cuenta los valores de los días anteriores. Tener en cuenta que variables como la altura o la energía no pueden ser independientes al tiempo ya que hay un 'tiempo de recuperación'. No es como quien tira un dado.
+Como hemos observado la energía es un factor importante para la calidad de la ola, y una mayor calidad de esta relacionado con una mayor energía. El  modelo de regresión para preveer la energía puede ser muy útil aunque a veces haya errores de 20 KJ o más. La magnitud de estos errores también pueden venir relacionadas con la dependencia temporal que hemos creado en la base de datos, ya que el modelo de regresión no tiene en cuenta los valores de los días anteriores. Tener en cuenta que variables como la altura o la energía no pueden ser independientes al tiempo ya que hay un 'tiempo de recuperación'. No es como quien tira un dado.
+
+Para el contraste de hipótesis no hemos utilizado la temperatura. Eso no significa que sean independientes, de hecho no lo són. Lo hemos hecho asi porque la temperatura no seguia una distribución normal y no disponía de tiempo ni de conocimientos en los que no tuviera que utilizar la normalidad de mis variables. Como la variable principal del estudio era la energía y había poca correlacion la hemos obviado. 
 
 Hay que tener en cuenta que hemos creado nuestra propia base de datos (veáse como en el anexo), que para modelar datos metereológicos debemos ir con precaución ya que no se expresan los picos que se observan en la naturaleza como las rachas de viento. Es más recomendable crear un modelo númerico mezclando modelos físicos que describan el comportamiento y la estadística. Por ejemplo el Puerto de Estado tiene un conjunto de datos SIMAR creados a partir de modelos numéricos mucho más precisos. Aun así suelen trabajar con el mismo problema de los picos.
 
@@ -432,8 +460,7 @@ Hay que tener en cuenta que hemos creado nuestra propia base de datos (veáse co
 
 
 # Anexo
-## Construcción de la base de datos
-
+### Construcción de la base de datos
 ```{r, echo=TRUE, message=FALSE}
 covarianza <- matrix(c(13, 77, -2, 0.25,
                        77, 5000, 134, 10,
@@ -480,9 +507,11 @@ for (i in 2:200) {
 }
 
 
-
+# unimos los datos numéricos y cualitativos
 datos <- tibble(datos_numericos,datos_cual)
 
+
+# Añadimos una variable de otra base de datos
 kaggle_data <- read.csv('kaggle_data.csv',header = TRUE) 
 datos_nuevos <- kaggle_data  %>%  
   filter(grepl('8:00',Date.Time) | grepl('20:00',Date.Time)) %>%
@@ -501,4 +530,43 @@ names(datos_nuevos) <- c('DAT','SST')
 
 datos <- datos %>% right_join(datos_nuevos) 
 ```
+### Definición del test de Hotelling
+```{r, echo=TRUE}
+test_H <- function(Y1,Y2){
+  # Calculamos la media y la matriz de covarianzas de la primera población
+  mu1 = colMeans(Y1) %>% as.matrix()
+  n1 = length(col(Y1[1]))
+  S1 = cov(Y1)
+  
+  # Repetimos para la segunda población
+  mu2 = colMeans(Y2) %>% as.matrix()
+  n2 = length(col(Y2[1]))
+  S2 = cov(Y2)
+  
+  # Comprobamos que hay las mismas variables
+  p = length(Y1)
+  if (p != length(Y2)){
+    return(print('WARNING: No hay el mismo número de variables'))
+  }
+  
+  # Definimos constantes necesarias para el cálculo
+  s = (n1+n2 -1 -p)*n1*n2/((n1+n2-2)*p*(n1+n2))
+  S = (n1*S1+n2*S2)/(n1+n2-2)
+  S_inv = solve(S)
+  
+  H = tibble(Valor_estadistico = 0,
+             df_num= p,
+             df_den = n1+n2-1-p,
+             pvalor= 0)
+  
+  # Calculamos el p-valor y el valor del estadístico
+  t =  s*t((mu2-mu1))%*%S_inv%*%(mu2-mu1)
+  H$Valor_estadistico =t*((n1+n2-2)*p)/(n1+n2-p -1)
+  
+  H$pvalor= 1-pf(t,p,n1+n2-p-1)
+  
+  return(H)
+}
+```
+
 # Referencias
