@@ -8,6 +8,12 @@ format:
     theme: lumen
     toc: true
     toc-depth: 3
+output:
+  html_document:
+    citation_package: natbib
+  df_print: paged
+bibliography: bibbliografia.bib
+csl: apa.csl
 Rendering:
     embed-resources: true
 ---
@@ -23,6 +29,7 @@ library(ggcorrplot)
 library(MASS)
 library(jpeg)
 library(Hotelling)
+library(patchwork)
 ```
 
 # Introducción
@@ -110,7 +117,7 @@ names(datos_nuevos) <- c('DAT','SST')
 datos <- datos %>% right_join(datos_nuevos) 
 ```
 
-Añadiremos la variable SST que indica la temperatura de la superficie del agua de la base de datos de [INTRODUCIR DATOS CON BIBLIOGRAFIA!]()
+Añadiremos la variable SST que indica la temperatura de la superficie del agua de la base de datos de [@author2023web]. Para los contrastes de hipótesis hemos utilizado los apuntes de [@apuntes]
 
 # Analisis exploratorio:
 
@@ -267,7 +274,7 @@ Finalmente estudiaremos la variación de esta función con la función Score que
 $$
 Score(\beta) := \frac{\partial l_Y}{\partial\beta}(\beta,\sigma^2) = \frac{1}{\sigma^2}X^T(Y-X\beta) 
 $$
-```{r}
+```{r,echo=FALSE}
 X <- datos_numericos %>% dplyr::select(V,P,A) %>% mutate(V1 = 1)
 X <- X[,c('V1','V','P','A')] %>% as.matrix()
 Y <- datos_numericos %>% dplyr::select(En) %>% as.matrix()
@@ -276,19 +283,39 @@ Score <- function(b){
 }
 ```
 
-Entonces ya podemos definir la función 
+Entonces con la función lm de R podemos calcular los coeficientes con la fórmula $(X^tX)^{-1}(X^tY)$ y verificar con la función Score 
+
 
 ```{r}
-regresion <- summary(lm(Y ~ X[,2]+ X[,3] + X[,4]))$coefficients[,1] %>% as.matrix()
+b = solve(t(X)%*%X)%*%(t(X)%*%Y) 
+
 recta_r <- function(x1,x2,x3){
-  v = matrix(c(1,x1,x2,x3), ncol = 4)
-  return(v%*%regresion)
+  n = length(x1)
+  v = matrix(c(rep(1,n),x1,x2,x3), ncol = 4, byrow = FALSE)
+  return(v%*%b)
 }
 
-Score(regresion)
+t(Score(b))
 ```
 
-Y como podemos observar la función de R nos define valores muy próximos a lo deseado.
+Y como podemos observar la función de R nos define valores muy próximos a lo deseado. Observemos caunto nos desajustamos en las predicciones duranto los 100 dias
+
+```{r,echo=FALSE}
+graf1 <- datos %>% dplyr::select(DAT,En)
+graf2 <- datos %>% mutate(En2 = recta_r(datos$V,datos$P,datos$A)) %>% dplyr::select(DAT,En2)
+
+ggplot() +
+  geom_line(data = graf1, aes(x = DAT, y = En, color = "Y1", group = 1), size = 0.8) +
+  geom_line(data = graf2, aes(x = DAT, y = En2, color = "Y2", group = 1), size = 0.5) +
+  labs(title = "Valores reales frente la aproximación",
+       x = "Días",
+       y = "Energía de las olas") +
+  scale_color_manual(name = "Variables", values = c("Y1" = "blue", "Y2" = "red")) +
+  theme_minimal()+theme(axis.text.x = element_blank())
+
+
+```
+
 
 # Contraste de la hipótesis
 
@@ -298,33 +325,116 @@ Y_mar <- datos %>% filter(DV%in%c('N','NW','NE'))%>% dplyr::select(V,En,P,A)
 Y_tierra <- datos %>% filter(DV %in% c('S','SW','SE'))%>% dplyr::select(V,En,P,A) 
 ```
 
-###   Como afecta la dirección del viento a las características de la ola?
+###   Afecta la dirección del viento a las características de la ola?
 
 Definiremos dos 'poblaciones' en función de la dirección del viento y realizamos un test del tipo:
 
 $$
 H_0: \mathbb{\mu_1} = \mu_2 
 $$
-Pero siguen nuestras distribuciones una multinomial? Si realizamos un test de normalidad de cada una de las variables observamos que si, exceptuando la temperatura que no la tendremos en cuenta por la baja correlación (Test de independencia?).
+Pero siguen nuestras distribuciones una multinomial? Si realizamos un test de normalidad de cada una de las variables observamos que si, exceptuando la temperatura que no la tendremos en cuenta por la baja correlación (Test de independencia?). Haremos un hotelling test nosotros y lo compararemos con la función de R.
+
+Sabemos la relación de la F de fisher-Snedecor con la T-Hotteling es:
+
+$$
+F^p_{m+p-1} = \frac{m+p-1}{mp}T^2(p,m)    
+$$
+
+Entonces lo utilizaremos para calcular el p-valor con la función pf de R. Después comparamos nuestro resultado con la función test.hotelling() del paquete Hotelling.
 
 ```{r}
-colMeans(Y_mar)
-colMeans(Y_tierra)
+# La siguiente función dado un valor de una T de Hotelling junto
+# sus grados de libertad nos calcula la probabilidad de un valor menor  o igual
+
+
+test_H <- function(Y1,Y2){
+  mu1 = colMeans(Y1) %>% as.matrix()
+  n1 = length(col(Y1[1]))
+  S1 = cov(Y1)
+  
+  mu2 = colMeans(Y2) %>% as.matrix()
+  n2 = length(col(Y2[1]))
+  S2 = cov(Y2)
+  
+  p = length(Y1)
+  if (p != length(Y2)){
+    return(print('WARNING: No hay el mismo número de variables'))
+  }
+  
+  s = (n1+n2 -1 -p)*n1*n2/((n1+n2-2)*p*(n1+n2))
+  S = (n1*S1+n2*S2)/(n1+n2-2)
+  S_inv = solve(S)
+  
+  H = tibble(Valor_estadistico = 0,
+             df_num= p,
+             df_den = n1+n2-1-p,
+             pvalor= 0)
+  t =  s*t((mu2-mu1))%*%S_inv%*%(mu2-mu1)
+  H$Valor_estadistico =t*((n1+n2-2)*p)/(n1+n2-p -1)
+  
+  H$pvalor= 1-pf(t,p,n1+n2-p-1)
+  
+  return(H)
+  
+}
 ```
+
 ```{r, echo=FALSE}
-resultado <- hotelling.test(Y_mar,Y_tierra)
-print(resultado)
+print(test_H(Y_mar,Y_tierra))
 ```
+Unos valores muy parecidos a la función de R que son los siguientes:
+
+```{r,echo = FALSE}
+print(hotelling.test(Y_mar,Y_tierra))
+```
+
+
+
+
+
 
 ###   La calidad de la ola esta relacionada con una variación de la energía?
 
 
+Para este contraste nos volvemos a definir dos subpoblaciones en función de si tienen dos estrellas o menos y si tienen 3 o más. Y hacemos un test de hotelling como el definido anteriormente. Y obtenemos los siguientes resultados:
+
+```{r}
+En12 <- datos %>% filter(Stars <= 2) %>% dplyr::select(En)
+En34 <- datos %>% filter(Stars >= 3) %>% dplyr::select(En)
+
+valor <- c(En12$En, En34$En)
+nivel <- c(rep('Calidad 1 y 2', length(En12$En)),rep('Calidad 3 y 4',length(En34$En)))
+
+graf_stars <- tibble(Calidad = nivel,
+                     Energia = valor)
+ggplot(graf_stars, aes(x = Calidad, y = Energia, fill = Calidad)) + geom_violin() +
+  labs(title = 'Energías segun las calidades') + theme_minimal()
+
+```
+
+
+```{r}
+
+
+print(test_H(En12,En34))
+```
+Este p-valor, indica una probabilidad muy baja de haber observado el valor del estadiístico suponiendo que las medias de las energías son iguales. Al ser el P-valor tan cercano a cero no sería muy verosímil nuestra hipótesis. Entonces la energía en las olas de mayor calidad esta desplazada (en concreto es mayor)
+
+
+
 # Conclusión
 
-# Bibliografia
+Como hemos observado la energía es un factor importante para la calidad de la ola, y una mayor calidad de esta relacionado con una mayor energía. El  modelo de regresión para preveer la energía aunque hay errores que distan hasta 30kJ, aunque teniendo en cuenta la variabilidad de esta variable no son errores tran grandes. La magnitud de estos errores también pueden venir relacionadas con la dependencia temporal que hemos creado en la base de datos, ya que el modelo de regresión no tiene en cuenta los valores de los días anteriores. Tener en cuenta que variables como la altura o la energía no pueden ser independientes al tiempo ya que hay un 'tiempo de recuperación'. No es como quien tira un dado.
+
+Hay que tener en cuenta que hemos creado nuestra propia base de datos (veáse como en el anexo), que para modelar datos metereológicos debemos ir con precaución ya que no se expresan los picos que se observan en la naturaleza como las rachas de viento. Es más recomendable crear un modelo númerico mezclando modelos físicos que describan el comportamiento y la estadística. Por ejemplo el Puerto de Estado tiene un conjunto de datos SIMAR creados a partir de modelos numéricos mucho más precisos. Aun así suelen trabajar con el mismo problema de los picos.
+
+
+
+
 # Anexo
 ## Construcción de la base de datos
-```{r}
+
+```{r, echo=TRUE, message=FALSE}
 covarianza <- matrix(c(13, 77, -2, 0.25,
                        77, 5000, 134, 10,
                        -2, 134, 6, 0.12,
@@ -333,7 +443,7 @@ covarianza <- matrix(c(13, 77, -2, 0.25,
 medias <- c(8, 164, 10, 1.3)
 
 set.seed(43)
-datos_numericos <- mvrnorm(150, mu = medias, covarianza) %>% as.tibble()
+datos_numericos <- mvrnorm(200, mu = medias, covarianza) %>% as.tibble()
 names(datos_numericos) <- c('V','En','P','A')
 
 # Limitamos a resultados realistas
@@ -345,38 +455,50 @@ datos_numericos <- datos_numericos %>%
     P = pmin(pmax(P, 5), 20),      # Periodo entre 5 y 20 s
     A = pmin(pmax(A, 0), 20)      # Altura entre 0 y 20 m
   )
-
-# Añadimos una dependencia temporal
-for (i in 2:nrow(datos_numericos)) {
-  datos_numericos$A[i] <- 0.3 * datos_numericos$A[i - 1] + 
-    0.5 * datos_numericos$A[i] + (datos_numericos$V[i]/8*1.3)*0.2
-  datos_numericos$En[i] <- 0.3 * datos_numericos$En[i - 1] + 
-    0.7 * datos_numericos$En[i]
-  
-}
-
 # Suponemos que nuestra bolla mide cada 12 horas
 direccion_viento <- sample(c('N','W','S','E',
-                             'NW','NE','SW','SE'),150, replace = TRUE)
-marea <- sample(c('ALTA','BAJA'),150, replace = TRUE) # Cambiar a alternado
-
+                             'NW','NE','SW','SE'),200, replace = TRUE)
+marea <- rep(c("ALTA", "BAJA"), times = 100)
 
 primer_dia <- as.Date("2017-01-01") 
-fechas <- seq(from = primer_dia, by ='day', length.out = 150) 
-
+fechas <- seq(from = primer_dia, by ='day', length.out = 100) 
+DAT = c()
+for (i in 1:100){
+  DAT = c(DAT, paste(as.character(fechas[i]), 'mañana'),paste(as.character(fechas[i]), 'tarde'))
+}
 datos_cual <- tibble(DV = direccion_viento,
                     M  = marea,
-                    DAT = fechas)
+                    DAT = DAT)
+
+# Añadimos una dependencia temporal
+for (i in 2:200) {
+  datos_numericos$A[i] <- 0.3 * datos_numericos$A[i - 1] + 
+    0.5 * datos_numericos$A[i] + (datos_numericos$V[i]/8*1.3)*0.2 
+  
+  datos_numericos$En[i] <- 0.3 * datos_numericos$En[i - 1] + 
+    0.7 * datos_numericos$En[i]
+}
+
+
 
 datos <- tibble(datos_numericos,datos_cual)
 
 kaggle_data <- read.csv('kaggle_data.csv',header = TRUE) 
-datos_nuevos <- kaggle_data  %>%  filter(grepl('12:00',Date.Time)) %>% dplyr::select(Date.Time,SST)
+datos_nuevos <- kaggle_data  %>%  
+  filter(grepl('8:00',Date.Time) | grepl('20:00',Date.Time)) %>%
+  dplyr::select(Date.Time,SST) %>% slice(1:200)
+
+
+fechas <- seq(from = primer_dia, by ='day', length.out = 100) 
+DATK = c()
+for (i in 1:100){
+  DATK = c(DATK, paste(as.character(fechas[i]), 'mañana'),paste(as.character(fechas[i]), 'tarde'))
+}
 
 datos_nuevos <- datos_nuevos %>% mutate(
-  Date.Time = seq(from = primer_dia, by ='day',length.out = 
-                                                  length(datos_nuevos$Date.Time))) 
+  Date.Time = DATK) 
 names(datos_nuevos) <- c('DAT','SST')
 
-datos <- datos %>% right_join(datos_nuevos) %>% slice(1:150)
+datos <- datos %>% right_join(datos_nuevos) 
 ```
+# Referencias

@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Melcion Ciudad Bosch">
-<meta name="dcterms.date" content="2024-11-12">
+<meta name="dcterms.date" content="2024-11-13">
 
 <title>Predicción oleaje</title>
 <style>
@@ -56,7 +56,27 @@ div.sourceCode
 @media screen {
 pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
 }
-</style>
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+  margin-bottom: 0em;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
 
 
 <script src="UntitledQMD_files/libs/clipboard/clipboard.min.js"></script>
@@ -116,15 +136,15 @@ window.Quarto = {
   <li><a href="#descripción-por-regresión-lineal" id="toc-descripción-por-regresión-lineal" class="nav-link" data-scroll-target="#descripción-por-regresión-lineal">Descripción por regresión lineal</a></li>
   <li><a href="#contraste-de-la-hipótesis" id="toc-contraste-de-la-hipótesis" class="nav-link" data-scroll-target="#contraste-de-la-hipótesis">Contraste de la hipótesis</a>
   <ul class="collapse">
-  <li><a href="#como-afecta-la-dirección-del-viento-a-las-características-de-la-ola" id="toc-como-afecta-la-dirección-del-viento-a-las-características-de-la-ola" class="nav-link" data-scroll-target="#como-afecta-la-dirección-del-viento-a-las-características-de-la-ola">Como afecta la dirección del viento a las características de la ola?</a></li>
+  <li><a href="#afecta-la-dirección-del-viento-a-las-características-de-la-ola" id="toc-afecta-la-dirección-del-viento-a-las-características-de-la-ola" class="nav-link" data-scroll-target="#afecta-la-dirección-del-viento-a-las-características-de-la-ola">Afecta la dirección del viento a las características de la ola?</a></li>
   <li><a href="#la-calidad-de-la-ola-esta-relacionada-con-una-variación-de-la-energía" id="toc-la-calidad-de-la-ola-esta-relacionada-con-una-variación-de-la-energía" class="nav-link" data-scroll-target="#la-calidad-de-la-ola-esta-relacionada-con-una-variación-de-la-energía">La calidad de la ola esta relacionada con una variación de la energía?</a></li>
   </ul></li>
   <li><a href="#conclusión" id="toc-conclusión" class="nav-link" data-scroll-target="#conclusión">Conclusión</a></li>
-  <li><a href="#bibliografia" id="toc-bibliografia" class="nav-link" data-scroll-target="#bibliografia">Bibliografia</a></li>
   <li><a href="#anexo" id="toc-anexo" class="nav-link" data-scroll-target="#anexo">Anexo</a>
   <ul class="collapse">
   <li><a href="#construcción-de-la-base-de-datos" id="toc-construcción-de-la-base-de-datos" class="nav-link" data-scroll-target="#construcción-de-la-base-de-datos">Construcción de la base de datos</a></li>
   </ul></li>
+  <li><a href="#referencias" id="toc-referencias" class="nav-link" data-scroll-target="#referencias">Referencias</a></li>
   </ul>
 </nav>
 </div>
@@ -150,7 +170,7 @@ window.Quarto = {
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">November 12, 2024</p>
+      <p class="date">November 13, 2024</p>
     </div>
   </div>
   
@@ -173,7 +193,7 @@ window.Quarto = {
 <p>Para proporcionar una web de predicción del oleaje modelizaremos la energía de las ola con los datos que puede proporcionar su boya. Además definiremos una variable que nos diga la calidad de la ola y miraremos si podemos relacionarla también con los datos que tenemos.</p>
 <p>Las muestras de datos són aleatorias generadas a partir de funciones de R. Para aportar realismo hemos hecho una interpretación de datos que hemos obtenido de aplicaciones como WindGuru, Windy o TodoSurf (que solo son semanales). Además para la generación de datos definimos una dependencia temporal, ya que no seria lógico que hoy hubiese olas de dos metros y a las 12 horas el mar este en calma.</p>
 <p>Planteamos la hipotesis de que un viento de tierra viene relacionado con una disminución de la energía y la altura, pero un aumento del periodo. Y que para un viento de mar provoca el efecto contrario. Para hacer este contraste realizaremos un contraste de medias restringiendo nuestros datos a los dos tipos de viento. Además veremos que la temperatura del agua no influye en las características de la ola.</p>
-<p>Añadiremos la variable SST que indica la temperatura de la superficie del agua de la base de datos de <a href="">INTRODUCIR DATOS CON BIBLIOGRAFIA!</a></p>
+<p>Añadiremos la variable SST que indica la temperatura de la superficie del agua de la base de datos de <span class="citation" data-cites="author2023web">(<a href="#ref-author2023web" role="doc-biblioref">Akdag, 2023</a>)</span>. Para los contrastes de hipótesis hemos utilizado los apuntes de <span class="citation" data-cites="apuntes">(<a href="#ref-apuntes" role="doc-biblioref">Irene, n.d.</a>)</span></p>
 </section>
 <section id="analisis-exploratorio" class="level1">
 <h1>Analisis exploratorio:</h1>
@@ -320,53 +340,91 @@ l_Y(\beta,\sigma^2) = log(f_{\beta,\sigma^2}(Y))
 <p><span class="math display">\[
 Score(\beta) := \frac{\partial l_Y}{\partial\beta}(\beta,\sigma^2) = \frac{1}{\sigma^2}X^T(Y-X\beta)
 \]</span></p>
+<p>Entonces con la función lm de R podemos calcular los coeficientes con la fórmula <span class="math inline">\((X^tX)^{-1}(X^tY)\)</span> y verificar con la función Score</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>X <span class="ot">&lt;-</span> datos_numericos <span class="sc">%&gt;%</span> dplyr<span class="sc">::</span><span class="fu">select</span>(V,P,A) <span class="sc">%&gt;%</span> <span class="fu">mutate</span>(<span class="at">V1 =</span> <span class="dv">1</span>)</span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>X <span class="ot">&lt;-</span> X[,<span class="fu">c</span>(<span class="st">'V1'</span>,<span class="st">'V'</span>,<span class="st">'P'</span>,<span class="st">'A'</span>)] <span class="sc">%&gt;%</span> <span class="fu">as.matrix</span>()</span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>Y <span class="ot">&lt;-</span> datos_numericos <span class="sc">%&gt;%</span> dplyr<span class="sc">::</span><span class="fu">select</span>(En) <span class="sc">%&gt;%</span> <span class="fu">as.matrix</span>()</span>
-<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>Score <span class="ot">&lt;-</span> <span class="cf">function</span>(b){</span>
-<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(<span class="fu">t</span>(X)<span class="sc">%*%</span>(Y<span class="sc">-</span>X<span class="sc">%*%</span>b))</span>
-<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-<p>Entonces ya podemos definir la función</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>regresion <span class="ot">&lt;-</span> <span class="fu">summary</span>(<span class="fu">lm</span>(Y <span class="sc">~</span> X[,<span class="dv">2</span>]<span class="sc">+</span> X[,<span class="dv">3</span>] <span class="sc">+</span> X[,<span class="dv">4</span>]))<span class="sc">$</span>coefficients[,<span class="dv">1</span>] <span class="sc">%&gt;%</span> <span class="fu">as.matrix</span>()</span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>recta_r <span class="ot">&lt;-</span> <span class="cf">function</span>(x1,x2,x3){</span>
-<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>  v <span class="ot">=</span> <span class="fu">matrix</span>(<span class="fu">c</span>(<span class="dv">1</span>,x1,x2,x3), <span class="at">ncol =</span> <span class="dv">4</span>)</span>
-<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(v<span class="sc">%*%</span>regresion)</span>
-<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a><span class="fu">Score</span>(regresion)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>b <span class="ot">=</span> <span class="fu">solve</span>(<span class="fu">t</span>(X)<span class="sc">%*%</span>X)<span class="sc">%*%</span>(<span class="fu">t</span>(X)<span class="sc">%*%</span>Y) </span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>recta_r <span class="ot">&lt;-</span> <span class="cf">function</span>(x1,x2,x3){</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>  n <span class="ot">=</span> <span class="fu">length</span>(x1)</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>  v <span class="ot">=</span> <span class="fu">matrix</span>(<span class="fu">c</span>(<span class="fu">rep</span>(<span class="dv">1</span>,n),x1,x2,x3), <span class="at">ncol =</span> <span class="dv">4</span>, <span class="at">byrow =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(v<span class="sc">%*%</span>b)</span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a><span class="fu">t</span>(<span class="fu">Score</span>(b))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>             En
-V1 5.741185e-12
-V  3.264233e-11
-P  5.439915e-11
-A  7.201351e-12</code></pre>
+<pre><code>              V1             V             P             A
+En -1.292761e-10 -9.030856e-10 -1.364981e-09 -1.558256e-10</code></pre>
 </div>
 </div>
-<p>Y como podemos observar la función de R nos define valores muy próximos a lo deseado.</p>
+<p>Y como podemos observar la función de R nos define valores muy próximos a lo deseado. Observemos caunto nos desajustamos en las predicciones duranto los 100 dias</p>
+<div class="cell">
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="UntitledQMD_files/figure-html/unnamed-chunk-14-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
 </section>
 <section id="contraste-de-la-hipótesis" class="level1">
 <h1>Contraste de la hipótesis</h1>
-<section id="como-afecta-la-dirección-del-viento-a-las-características-de-la-ola" class="level3">
-<h3 class="anchored" data-anchor-id="como-afecta-la-dirección-del-viento-a-las-características-de-la-ola">Como afecta la dirección del viento a las características de la ola?</h3>
+<section id="afecta-la-dirección-del-viento-a-las-características-de-la-ola" class="level3">
+<h3 class="anchored" data-anchor-id="afecta-la-dirección-del-viento-a-las-características-de-la-ola">Afecta la dirección del viento a las características de la ola?</h3>
 <p>Definiremos dos ‘poblaciones’ en función de la dirección del viento y realizamos un test del tipo:</p>
 <p><span class="math display">\[
 H_0: \mathbb{\mu_1} = \mu_2
-\]</span> Pero siguen nuestras distribuciones una multinomial? Si realizamos un test de normalidad de cada una de las variables observamos que si, exceptuando la temperatura que no la tendremos en cuenta por la baja correlación (Test de independencia?).</p>
+\]</span> Pero siguen nuestras distribuciones una multinomial? Si realizamos un test de normalidad de cada una de las variables observamos que si, exceptuando la temperatura que no la tendremos en cuenta por la baja correlación (Test de independencia?). Haremos un hotelling test nosotros y lo compararemos con la función de R.</p>
+<p>Sabemos la relación de la F de fisher-Snedecor con la T-Hotteling es:</p>
+<p><span class="math display">\[
+F^p_{m+p-1} = \frac{m+p-1}{mp}T^2(p,m)    
+\]</span></p>
+<p>Entonces lo utilizaremos para calcular el p-valor con la función pf de R. Después comparamos nuestro resultado con la función test.hotelling() del paquete Hotelling.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu">colMeans</span>(Y_mar)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co"># La siguiente función dado un valor de una T de Hotelling junto</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="co"># sus grados de libertad nos calcula la probabilidad de un valor menor  o igual</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>test_H <span class="ot">&lt;-</span> <span class="cf">function</span>(Y1,Y2){</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>  mu1 <span class="ot">=</span> <span class="fu">colMeans</span>(Y1) <span class="sc">%&gt;%</span> <span class="fu">as.matrix</span>()</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>  n1 <span class="ot">=</span> <span class="fu">length</span>(<span class="fu">col</span>(Y1[<span class="dv">1</span>]))</span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>  S1 <span class="ot">=</span> <span class="fu">cov</span>(Y1)</span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>  mu2 <span class="ot">=</span> <span class="fu">colMeans</span>(Y2) <span class="sc">%&gt;%</span> <span class="fu">as.matrix</span>()</span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>  n2 <span class="ot">=</span> <span class="fu">length</span>(<span class="fu">col</span>(Y2[<span class="dv">1</span>]))</span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>  S2 <span class="ot">=</span> <span class="fu">cov</span>(Y2)</span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>  p <span class="ot">=</span> <span class="fu">length</span>(Y1)</span>
+<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (p <span class="sc">!=</span> <span class="fu">length</span>(Y2)){</span>
+<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span>(<span class="fu">print</span>(<span class="st">'WARNING: No hay el mismo número de variables'</span>))</span>
+<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb13-19"><a href="#cb13-19" aria-hidden="true" tabindex="-1"></a>  s <span class="ot">=</span> (n1<span class="sc">+</span>n2 <span class="sc">-</span><span class="dv">1</span> <span class="sc">-</span>p)<span class="sc">*</span>n1<span class="sc">*</span>n2<span class="sc">/</span>((n1<span class="sc">+</span>n2<span class="dv">-2</span>)<span class="sc">*</span>p<span class="sc">*</span>(n1<span class="sc">+</span>n2))</span>
+<span id="cb13-20"><a href="#cb13-20" aria-hidden="true" tabindex="-1"></a>  S <span class="ot">=</span> (n1<span class="sc">*</span>S1<span class="sc">+</span>n2<span class="sc">*</span>S2)<span class="sc">/</span>(n1<span class="sc">+</span>n2<span class="dv">-2</span>)</span>
+<span id="cb13-21"><a href="#cb13-21" aria-hidden="true" tabindex="-1"></a>  S_inv <span class="ot">=</span> <span class="fu">solve</span>(S)</span>
+<span id="cb13-22"><a href="#cb13-22" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb13-23"><a href="#cb13-23" aria-hidden="true" tabindex="-1"></a>  H <span class="ot">=</span> <span class="fu">tibble</span>(<span class="at">Valor_estadistico =</span> <span class="dv">0</span>,</span>
+<span id="cb13-24"><a href="#cb13-24" aria-hidden="true" tabindex="-1"></a>             <span class="at">df_num=</span> p,</span>
+<span id="cb13-25"><a href="#cb13-25" aria-hidden="true" tabindex="-1"></a>             <span class="at">df_den =</span> n1<span class="sc">+</span>n2<span class="dv">-1</span><span class="sc">-</span>p,</span>
+<span id="cb13-26"><a href="#cb13-26" aria-hidden="true" tabindex="-1"></a>             <span class="at">pvalor=</span> <span class="dv">0</span>)</span>
+<span id="cb13-27"><a href="#cb13-27" aria-hidden="true" tabindex="-1"></a>  t <span class="ot">=</span>  s<span class="sc">*</span><span class="fu">t</span>((mu2<span class="sc">-</span>mu1))<span class="sc">%*%</span>S_inv<span class="sc">%*%</span>(mu2<span class="sc">-</span>mu1)</span>
+<span id="cb13-28"><a href="#cb13-28" aria-hidden="true" tabindex="-1"></a>  H<span class="sc">$</span>Valor_estadistico <span class="ot">=</span>t<span class="sc">*</span>((n1<span class="sc">+</span>n2<span class="dv">-2</span>)<span class="sc">*</span>p)<span class="sc">/</span>(n1<span class="sc">+</span>n2<span class="sc">-</span>p <span class="sc">-</span><span class="dv">1</span>)</span>
+<span id="cb13-29"><a href="#cb13-29" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb13-30"><a href="#cb13-30" aria-hidden="true" tabindex="-1"></a>  H<span class="sc">$</span>pvalor<span class="ot">=</span> <span class="dv">1</span><span class="sc">-</span><span class="fu">pf</span>(t,p,n1<span class="sc">+</span>n2<span class="sc">-</span>p<span class="dv">-1</span>)</span>
+<span id="cb13-31"><a href="#cb13-31" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb13-32"><a href="#cb13-32" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(H)</span>
+<span id="cb13-33"><a href="#cb13-33" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb13-34"><a href="#cb13-34" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
 <div class="cell-output cell-output-stdout">
-<pre><code>         V         En          P          A 
-  8.446428 157.678827   9.744010   1.310089 </code></pre>
-</div>
-<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="fu">colMeans</span>(Y_tierra)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>         V         En          P          A 
-  7.304379 153.455584  10.036529   1.269861 </code></pre>
+<pre><code># A tibble: 1 × 4
+  Valor_estadistico[,1] df_num df_den pvalor[,1]
+                  &lt;dbl&gt;  &lt;int&gt;  &lt;dbl&gt;      &lt;dbl&gt;
+1                  4.46      4    140      0.364</code></pre>
 </div>
 </div>
+<p>Unos valores muy parecidos a la función de R que son los siguientes:</p>
 <div class="cell">
 <div class="cell-output cell-output-stdout">
 <pre><code>Test stat:  4.5194 
@@ -378,13 +436,42 @@ P-value:  0.3562 </code></pre>
 </section>
 <section id="la-calidad-de-la-ola-esta-relacionada-con-una-variación-de-la-energía" class="level3">
 <h3 class="anchored" data-anchor-id="la-calidad-de-la-ola-esta-relacionada-con-una-variación-de-la-energía">La calidad de la ola esta relacionada con una variación de la energía?</h3>
+<p>Para este contraste nos volvemos a definir dos subpoblaciones en función de si tienen dos estrellas o menos y si tienen 3 o más. Y hacemos un test de hotelling como el definido anteriormente. Y obtenemos los siguientes resultados:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>En12 <span class="ot">&lt;-</span> datos <span class="sc">%&gt;%</span> <span class="fu">filter</span>(Stars <span class="sc">&lt;=</span> <span class="dv">2</span>) <span class="sc">%&gt;%</span> dplyr<span class="sc">::</span><span class="fu">select</span>(En)</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>En34 <span class="ot">&lt;-</span> datos <span class="sc">%&gt;%</span> <span class="fu">filter</span>(Stars <span class="sc">&gt;=</span> <span class="dv">3</span>) <span class="sc">%&gt;%</span> dplyr<span class="sc">::</span><span class="fu">select</span>(En)</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>valor <span class="ot">&lt;-</span> <span class="fu">c</span>(En12<span class="sc">$</span>En, En34<span class="sc">$</span>En)</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>nivel <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fu">rep</span>(<span class="st">'Calidad 1 y 2'</span>, <span class="fu">length</span>(En12<span class="sc">$</span>En)),<span class="fu">rep</span>(<span class="st">'Calidad 3 y 4'</span>,<span class="fu">length</span>(En34<span class="sc">$</span>En)))</span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>graf_stars <span class="ot">&lt;-</span> <span class="fu">tibble</span>(<span class="at">Calidad =</span> nivel,</span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>                     <span class="at">Energia =</span> valor)</span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(graf_stars, <span class="fu">aes</span>(<span class="at">x =</span> Calidad, <span class="at">y =</span> Energia, <span class="at">fill =</span> Calidad)) <span class="sc">+</span> <span class="fu">geom_violin</span>() <span class="sc">+</span></span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">'Energías segun las calidades'</span>) <span class="sc">+</span> <span class="fu">theme_minimal</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="UntitledQMD_files/figure-html/unnamed-chunk-19-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">test_H</span>(En12,En34))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 1 × 4
+  Valor_estadistico[,1] df_num df_den pvalor[,1]
+                  &lt;dbl&gt;  &lt;int&gt;  &lt;dbl&gt;      &lt;dbl&gt;
+1                  58.8      1    190   8.63e-13</code></pre>
+</div>
+</div>
+<p>Este p-valor, indica una probabilidad muy baja de haber observado el valor del estadiístico suponiendo que las medias de las energías son iguales. Al ser el P-valor tan cercano a cero no sería muy verosímil nuestra hipótesis. Entonces la energía en las olas de mayor calidad esta desplazada (en concreto es mayor)</p>
 </section>
 </section>
 <section id="conclusión" class="level1">
 <h1>Conclusión</h1>
-</section>
-<section id="bibliografia" class="level1">
-<h1>Bibliografia</h1>
+<p>Como hemos observado la energía es un factor importante para la calidad de la ola, y una mayor calidad de esta relacionado con una mayor energía. El modelo de regresión para preveer la energía aunque hay errores que distan hasta 30kJ, aunque teniendo en cuenta la variabilidad de esta variable no son errores tran grandes. La magnitud de estos errores también pueden venir relacionadas con la dependencia temporal que hemos creado en la base de datos, ya que el modelo de regresión no tiene en cuenta los valores de los días anteriores. Tener en cuenta que variables como la altura o la energía no pueden ser independientes al tiempo ya que hay un ‘tiempo de recuperación’. No es como quien tira un dado.</p>
+<p>Hay que tener en cuenta que hemos creado nuestra propia base de datos (veáse como en el anexo), que para modelar datos metereológicos debemos ir con precaución ya que no se expresan los picos que se observan en la naturaleza como las rachas de viento. Es más recomendable crear un modelo númerico mezclando modelos físicos que describan el comportamiento y la estadística. Por ejemplo el Puerto de Estado tiene un conjunto de datos SIMAR creados a partir de modelos numéricos mucho más precisos. Aun así suelen trabajar con el mismo problema de los picos.</p>
 </section>
 <section id="anexo" class="level1">
 <h1>Anexo</h1>
@@ -399,7 +486,7 @@ P-value:  0.3562 </code></pre>
 <span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>medias <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">8</span>, <span class="dv">164</span>, <span class="dv">10</span>, <span class="fl">1.3</span>)</span>
 <span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">43</span>)</span>
-<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a>datos_numericos <span class="ot">&lt;-</span> <span class="fu">mvrnorm</span>(<span class="dv">150</span>, <span class="at">mu =</span> medias, covarianza) <span class="sc">%&gt;%</span> <span class="fu">as.tibble</span>()</span>
+<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a>datos_numericos <span class="ot">&lt;-</span> <span class="fu">mvrnorm</span>(<span class="dv">200</span>, <span class="at">mu =</span> medias, covarianza) <span class="sc">%&gt;%</span> <span class="fu">as.tibble</span>()</span>
 <span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(datos_numericos) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">'V'</span>,<span class="st">'En'</span>,<span class="st">'P'</span>,<span class="st">'A'</span>)</span>
 <span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Limitamos a resultados realistas</span></span>
@@ -411,45 +498,67 @@ P-value:  0.3562 </code></pre>
 <span id="cb19-18"><a href="#cb19-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">P =</span> <span class="fu">pmin</span>(<span class="fu">pmax</span>(P, <span class="dv">5</span>), <span class="dv">20</span>),      <span class="co"># Periodo entre 5 y 20 s</span></span>
 <span id="cb19-19"><a href="#cb19-19" aria-hidden="true" tabindex="-1"></a>    <span class="at">A =</span> <span class="fu">pmin</span>(<span class="fu">pmax</span>(A, <span class="dv">0</span>), <span class="dv">20</span>)      <span class="co"># Altura entre 0 y 20 m</span></span>
 <span id="cb19-20"><a href="#cb19-20" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb19-21"><a href="#cb19-21" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-22"><a href="#cb19-22" aria-hidden="true" tabindex="-1"></a><span class="co"># Añadimos una dependencia temporal</span></span>
-<span id="cb19-23"><a href="#cb19-23" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">2</span><span class="sc">:</span><span class="fu">nrow</span>(datos_numericos)) {</span>
-<span id="cb19-24"><a href="#cb19-24" aria-hidden="true" tabindex="-1"></a>  datos_numericos<span class="sc">$</span>A[i] <span class="ot">&lt;-</span> <span class="fl">0.3</span> <span class="sc">*</span> datos_numericos<span class="sc">$</span>A[i <span class="sc">-</span> <span class="dv">1</span>] <span class="sc">+</span> </span>
-<span id="cb19-25"><a href="#cb19-25" aria-hidden="true" tabindex="-1"></a>    <span class="fl">0.5</span> <span class="sc">*</span> datos_numericos<span class="sc">$</span>A[i] <span class="sc">+</span> (datos_numericos<span class="sc">$</span>V[i]<span class="sc">/</span><span class="dv">8</span><span class="sc">*</span><span class="fl">1.3</span>)<span class="sc">*</span><span class="fl">0.2</span></span>
-<span id="cb19-26"><a href="#cb19-26" aria-hidden="true" tabindex="-1"></a>  datos_numericos<span class="sc">$</span>En[i] <span class="ot">&lt;-</span> <span class="fl">0.3</span> <span class="sc">*</span> datos_numericos<span class="sc">$</span>En[i <span class="sc">-</span> <span class="dv">1</span>] <span class="sc">+</span> </span>
-<span id="cb19-27"><a href="#cb19-27" aria-hidden="true" tabindex="-1"></a>    <span class="fl">0.7</span> <span class="sc">*</span> datos_numericos<span class="sc">$</span>En[i]</span>
-<span id="cb19-28"><a href="#cb19-28" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb19-29"><a href="#cb19-29" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb19-30"><a href="#cb19-30" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-31"><a href="#cb19-31" aria-hidden="true" tabindex="-1"></a><span class="co"># Suponemos que nuestra bolla mide cada 12 horas</span></span>
-<span id="cb19-32"><a href="#cb19-32" aria-hidden="true" tabindex="-1"></a>direccion_viento <span class="ot">&lt;-</span> <span class="fu">sample</span>(<span class="fu">c</span>(<span class="st">'N'</span>,<span class="st">'W'</span>,<span class="st">'S'</span>,<span class="st">'E'</span>,</span>
-<span id="cb19-33"><a href="#cb19-33" aria-hidden="true" tabindex="-1"></a>                             <span class="st">'NW'</span>,<span class="st">'NE'</span>,<span class="st">'SW'</span>,<span class="st">'SE'</span>),<span class="dv">150</span>, <span class="at">replace =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb19-34"><a href="#cb19-34" aria-hidden="true" tabindex="-1"></a>marea <span class="ot">&lt;-</span> <span class="fu">sample</span>(<span class="fu">c</span>(<span class="st">'ALTA'</span>,<span class="st">'BAJA'</span>),<span class="dv">150</span>, <span class="at">replace =</span> <span class="cn">TRUE</span>) <span class="co"># Cambiar a alternado</span></span>
+<span id="cb19-21"><a href="#cb19-21" aria-hidden="true" tabindex="-1"></a><span class="co"># Suponemos que nuestra bolla mide cada 12 horas</span></span>
+<span id="cb19-22"><a href="#cb19-22" aria-hidden="true" tabindex="-1"></a>direccion_viento <span class="ot">&lt;-</span> <span class="fu">sample</span>(<span class="fu">c</span>(<span class="st">'N'</span>,<span class="st">'W'</span>,<span class="st">'S'</span>,<span class="st">'E'</span>,</span>
+<span id="cb19-23"><a href="#cb19-23" aria-hidden="true" tabindex="-1"></a>                             <span class="st">'NW'</span>,<span class="st">'NE'</span>,<span class="st">'SW'</span>,<span class="st">'SE'</span>),<span class="dv">200</span>, <span class="at">replace =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb19-24"><a href="#cb19-24" aria-hidden="true" tabindex="-1"></a>marea <span class="ot">&lt;-</span> <span class="fu">rep</span>(<span class="fu">c</span>(<span class="st">"ALTA"</span>, <span class="st">"BAJA"</span>), <span class="at">times =</span> <span class="dv">100</span>)</span>
+<span id="cb19-25"><a href="#cb19-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-26"><a href="#cb19-26" aria-hidden="true" tabindex="-1"></a>primer_dia <span class="ot">&lt;-</span> <span class="fu">as.Date</span>(<span class="st">"2017-01-01"</span>) </span>
+<span id="cb19-27"><a href="#cb19-27" aria-hidden="true" tabindex="-1"></a>fechas <span class="ot">&lt;-</span> <span class="fu">seq</span>(<span class="at">from =</span> primer_dia, <span class="at">by =</span><span class="st">'day'</span>, <span class="at">length.out =</span> <span class="dv">100</span>) </span>
+<span id="cb19-28"><a href="#cb19-28" aria-hidden="true" tabindex="-1"></a>DAT <span class="ot">=</span> <span class="fu">c</span>()</span>
+<span id="cb19-29"><a href="#cb19-29" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">100</span>){</span>
+<span id="cb19-30"><a href="#cb19-30" aria-hidden="true" tabindex="-1"></a>  DAT <span class="ot">=</span> <span class="fu">c</span>(DAT, <span class="fu">paste</span>(<span class="fu">as.character</span>(fechas[i]), <span class="st">'mañana'</span>),<span class="fu">paste</span>(<span class="fu">as.character</span>(fechas[i]), <span class="st">'tarde'</span>))</span>
+<span id="cb19-31"><a href="#cb19-31" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb19-32"><a href="#cb19-32" aria-hidden="true" tabindex="-1"></a>datos_cual <span class="ot">&lt;-</span> <span class="fu">tibble</span>(<span class="at">DV =</span> direccion_viento,</span>
+<span id="cb19-33"><a href="#cb19-33" aria-hidden="true" tabindex="-1"></a>                    <span class="at">M  =</span> marea,</span>
+<span id="cb19-34"><a href="#cb19-34" aria-hidden="true" tabindex="-1"></a>                    <span class="at">DAT =</span> DAT)</span>
 <span id="cb19-35"><a href="#cb19-35" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-36"><a href="#cb19-36" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-37"><a href="#cb19-37" aria-hidden="true" tabindex="-1"></a>primer_dia <span class="ot">&lt;-</span> <span class="fu">as.Date</span>(<span class="st">"2017-01-01"</span>) </span>
-<span id="cb19-38"><a href="#cb19-38" aria-hidden="true" tabindex="-1"></a>fechas <span class="ot">&lt;-</span> <span class="fu">seq</span>(<span class="at">from =</span> primer_dia, <span class="at">by =</span><span class="st">'day'</span>, <span class="at">length.out =</span> <span class="dv">150</span>) </span>
-<span id="cb19-39"><a href="#cb19-39" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-40"><a href="#cb19-40" aria-hidden="true" tabindex="-1"></a>datos_cual <span class="ot">&lt;-</span> <span class="fu">tibble</span>(<span class="at">DV =</span> direccion_viento,</span>
-<span id="cb19-41"><a href="#cb19-41" aria-hidden="true" tabindex="-1"></a>                    <span class="at">M  =</span> marea,</span>
-<span id="cb19-42"><a href="#cb19-42" aria-hidden="true" tabindex="-1"></a>                    <span class="at">DAT =</span> fechas)</span>
-<span id="cb19-43"><a href="#cb19-43" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-44"><a href="#cb19-44" aria-hidden="true" tabindex="-1"></a>datos <span class="ot">&lt;-</span> <span class="fu">tibble</span>(datos_numericos,datos_cual)</span>
+<span id="cb19-36"><a href="#cb19-36" aria-hidden="true" tabindex="-1"></a><span class="co"># Añadimos una dependencia temporal</span></span>
+<span id="cb19-37"><a href="#cb19-37" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">2</span><span class="sc">:</span><span class="dv">200</span>) {</span>
+<span id="cb19-38"><a href="#cb19-38" aria-hidden="true" tabindex="-1"></a>  datos_numericos<span class="sc">$</span>A[i] <span class="ot">&lt;-</span> <span class="fl">0.3</span> <span class="sc">*</span> datos_numericos<span class="sc">$</span>A[i <span class="sc">-</span> <span class="dv">1</span>] <span class="sc">+</span> </span>
+<span id="cb19-39"><a href="#cb19-39" aria-hidden="true" tabindex="-1"></a>    <span class="fl">0.5</span> <span class="sc">*</span> datos_numericos<span class="sc">$</span>A[i] <span class="sc">+</span> (datos_numericos<span class="sc">$</span>V[i]<span class="sc">/</span><span class="dv">8</span><span class="sc">*</span><span class="fl">1.3</span>)<span class="sc">*</span><span class="fl">0.2</span> </span>
+<span id="cb19-40"><a href="#cb19-40" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb19-41"><a href="#cb19-41" aria-hidden="true" tabindex="-1"></a>  datos_numericos<span class="sc">$</span>En[i] <span class="ot">&lt;-</span> <span class="fl">0.3</span> <span class="sc">*</span> datos_numericos<span class="sc">$</span>En[i <span class="sc">-</span> <span class="dv">1</span>] <span class="sc">+</span> </span>
+<span id="cb19-42"><a href="#cb19-42" aria-hidden="true" tabindex="-1"></a>    <span class="fl">0.7</span> <span class="sc">*</span> datos_numericos<span class="sc">$</span>En[i]</span>
+<span id="cb19-43"><a href="#cb19-43" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb19-44"><a href="#cb19-44" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb19-45"><a href="#cb19-45" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-46"><a href="#cb19-46" aria-hidden="true" tabindex="-1"></a>kaggle_data <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="st">'kaggle_data.csv'</span>,<span class="at">header =</span> <span class="cn">TRUE</span>) </span>
-<span id="cb19-47"><a href="#cb19-47" aria-hidden="true" tabindex="-1"></a>datos_nuevos <span class="ot">&lt;-</span> kaggle_data  <span class="sc">%&gt;%</span>  <span class="fu">filter</span>(<span class="fu">grepl</span>(<span class="st">'12:00'</span>,Date.Time)) <span class="sc">%&gt;%</span> dplyr<span class="sc">::</span><span class="fu">select</span>(Date.Time,SST)</span>
+<span id="cb19-46"><a href="#cb19-46" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-47"><a href="#cb19-47" aria-hidden="true" tabindex="-1"></a>datos <span class="ot">&lt;-</span> <span class="fu">tibble</span>(datos_numericos,datos_cual)</span>
 <span id="cb19-48"><a href="#cb19-48" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-49"><a href="#cb19-49" aria-hidden="true" tabindex="-1"></a>datos_nuevos <span class="ot">&lt;-</span> datos_nuevos <span class="sc">%&gt;%</span> <span class="fu">mutate</span>(</span>
-<span id="cb19-50"><a href="#cb19-50" aria-hidden="true" tabindex="-1"></a>  <span class="at">Date.Time =</span> <span class="fu">seq</span>(<span class="at">from =</span> primer_dia, <span class="at">by =</span><span class="st">'day'</span>,<span class="at">length.out =</span> </span>
-<span id="cb19-51"><a href="#cb19-51" aria-hidden="true" tabindex="-1"></a>                                                  <span class="fu">length</span>(datos_nuevos<span class="sc">$</span>Date.Time))) </span>
-<span id="cb19-52"><a href="#cb19-52" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(datos_nuevos) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">'DAT'</span>,<span class="st">'SST'</span>)</span>
+<span id="cb19-49"><a href="#cb19-49" aria-hidden="true" tabindex="-1"></a>kaggle_data <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="st">'kaggle_data.csv'</span>,<span class="at">header =</span> <span class="cn">TRUE</span>) </span>
+<span id="cb19-50"><a href="#cb19-50" aria-hidden="true" tabindex="-1"></a>datos_nuevos <span class="ot">&lt;-</span> kaggle_data  <span class="sc">%&gt;%</span>  </span>
+<span id="cb19-51"><a href="#cb19-51" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="fu">grepl</span>(<span class="st">'8:00'</span>,Date.Time) <span class="sc">|</span> <span class="fu">grepl</span>(<span class="st">'20:00'</span>,Date.Time)) <span class="sc">%&gt;%</span></span>
+<span id="cb19-52"><a href="#cb19-52" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">select</span>(Date.Time,SST) <span class="sc">%&gt;%</span> <span class="fu">slice</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">200</span>)</span>
 <span id="cb19-53"><a href="#cb19-53" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-54"><a href="#cb19-54" aria-hidden="true" tabindex="-1"></a>datos <span class="ot">&lt;-</span> datos <span class="sc">%&gt;%</span> <span class="fu">right_join</span>(datos_nuevos) <span class="sc">%&gt;%</span> <span class="fu">slice</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">150</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb19-54"><a href="#cb19-54" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-55"><a href="#cb19-55" aria-hidden="true" tabindex="-1"></a>fechas <span class="ot">&lt;-</span> <span class="fu">seq</span>(<span class="at">from =</span> primer_dia, <span class="at">by =</span><span class="st">'day'</span>, <span class="at">length.out =</span> <span class="dv">100</span>) </span>
+<span id="cb19-56"><a href="#cb19-56" aria-hidden="true" tabindex="-1"></a>DATK <span class="ot">=</span> <span class="fu">c</span>()</span>
+<span id="cb19-57"><a href="#cb19-57" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">100</span>){</span>
+<span id="cb19-58"><a href="#cb19-58" aria-hidden="true" tabindex="-1"></a>  DATK <span class="ot">=</span> <span class="fu">c</span>(DATK, <span class="fu">paste</span>(<span class="fu">as.character</span>(fechas[i]), <span class="st">'mañana'</span>),<span class="fu">paste</span>(<span class="fu">as.character</span>(fechas[i]), <span class="st">'tarde'</span>))</span>
+<span id="cb19-59"><a href="#cb19-59" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb19-60"><a href="#cb19-60" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-61"><a href="#cb19-61" aria-hidden="true" tabindex="-1"></a>datos_nuevos <span class="ot">&lt;-</span> datos_nuevos <span class="sc">%&gt;%</span> <span class="fu">mutate</span>(</span>
+<span id="cb19-62"><a href="#cb19-62" aria-hidden="true" tabindex="-1"></a>  <span class="at">Date.Time =</span> DATK) </span>
+<span id="cb19-63"><a href="#cb19-63" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(datos_nuevos) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">'DAT'</span>,<span class="st">'SST'</span>)</span>
+<span id="cb19-64"><a href="#cb19-64" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-65"><a href="#cb19-65" aria-hidden="true" tabindex="-1"></a>datos <span class="ot">&lt;-</span> datos <span class="sc">%&gt;%</span> <span class="fu">right_join</span>(datos_nuevos) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
 </section>
+<section id="referencias" class="level1 unnumbered">
 
-</main>
+
+</section>
+
+<div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" role="doc-bibliography" id="quarto-bibliography"><h2 class="anchored quarto-appendix-heading">Referencias</h2><div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" data-line-spacing="2" role="list">
+<div id="ref-author2023web" class="csl-entry" role="listitem">
+Akdag, M. (2023). <em>Ocean wave prediction</em>. <a href="https://www.kaggle.com/code/akdagmelih/ocean-wave-prediction-with-lstm?scriptVersionId=150440480&amp;cellId=1">https://www.kaggle.com/code/akdagmelih/ocean-wave-prediction-with-lstm?scriptVersionId=150440480&amp;cellId=1</a>
+</div>
+<div id="ref-apuntes" class="csl-entry" role="listitem">
+Irene. (n.d.). <em>Apuntes analisis de datos</em>. <a href="https://github.com/AprendeR-UIB/AD.git">https://github.com/AprendeR-UIB/AD.git</a>
+</div>
+</div></section></div></main>
 <!-- /main column -->
 <script id="quarto-html-after-body" type="application/javascript">
 window.document.addEventListener("DOMContentLoaded", function (event) {
